@@ -1,0 +1,61 @@
+{
+  "_nota": "Verbos que entiende el parser. Los regulares se conjugan con las reglas de morfologia.json; en 'irregular' van solo los tiempos que no siguen la regla, en el orden de 'personas' (1s, 2s, 3s, 1p, 3p). 'transitivo' indica si el verbo suele llevar objeto: sirve para decidir si un sustantivo después del verbo es sujeto u objeto (bitácora S-04).",
+
+  "verbos": [
+    {
+      "lema": "venir", "concepto": "VENIR", "transitivo": false,
+      "irregular": {
+        "presente": ["vengo", "vienes", "viene", "venimos", "vienen"],
+        "pasado":   ["vine", "viniste", "vino", "vinimos", "vinieron"],
+        "futuro":   ["vendré", "vendrás", "vendrá", "vendremos", "vendrán"]
+      }
+    },
+    {
+      "lema": "llegar", "concepto": "VENIR", "transitivo": false,
+      "irregular": {
+        "pasado": ["llegué", "llegaste", "llegó", "llegamos", "llegaron"]
+      }
+    },
+    { "lema": "enviar",   "concepto": "ENVIAR",   "transitivo": true },
+    {
+      "lema": "ver", "concepto": "VER", "transitivo": true,
+      "irregular": {
+        "presente": ["veo", "ves", "ve", "vemos", "ven"]
+      }
+    },
+    {
+      "lema": "querer", "concepto": "QUERER", "transitivo": true,
+      "irregular": {
+        "presente": ["quiero", "quieres", "quiere", "queremos", "quieren"],
+        "pasado":   ["quise", "quisiste", "quiso", "quisimos", "quisieron"],
+        "futuro":   ["querré", "querrás", "querrá", "querremos", "querrán"]
+      }
+    },
+    {
+      "lema": "ser", "concepto": "SER", "transitivo": false,
+      "irregular": {
+        "presente": ["soy", "eres", "es", "somos", "son"],
+        "pasado":   ["fui", "fuiste", "fue", "fuimos", "fueron"]
+      }
+    },
+    {
+      "lema": "estar", "concepto": "SER", "transitivo": false,
+      "irregular": {
+        "presente": ["estoy", "estás", "está", "estamos", "están"],
+        "pasado":   ["estuve", "estuviste", "estuvo", "estuvimos", "estuvieron"]
+      }
+    },
+    { "lema": "hablar",   "concepto": "HABLAR",   "transitivo": false },
+    { "lema": "escuchar", "concepto": "ESCUCHAR", "transitivo": true },
+    { "lema": "esperar",  "concepto": "ESPERAR",  "transitivo": true },
+    { "lema": "visitar",  "concepto": "VISITAR",  "transitivo": true },
+    {
+      "_ir": "'ir' no está en el manual: solo se usa como auxiliar del futuro ('van a llegar'). Usado solo ('van a la tierra') no tiene traducción.",
+      "lema": "ir", "concepto": null, "transitivo": false, "auxiliarFuturo": true,
+      "irregular": {
+        "presente": ["voy", "vas", "va", "vamos", "van"],
+        "pasado":   ["fui", "fuiste", "fue", "fuimos", "fueron"]
+      }
+    }
+  ]
+}

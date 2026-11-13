@@ -1,0 +1,40 @@
+{
+  "_nota": "Reglas de la morfología verbal del español. El código solo sabe aplicar estas reglas; las terminaciones, el orden de preferencia y las decisiones sobre el sujeto omitido viven aquí y se pueden cambiar sin recompilar.",
+
+  "_personas": "Orden de las terminaciones. No se incluye vosotros: en Colombia se usa 'ustedes' con el verbo en 3p (bitácora S-02).",
+  "personas": ["1s", "2s", "3s", "1p", "3p"],
+
+  "_tiempos": "base 'raiz': el infinitivo sin -ar/-er/-ir (lleg-ar). base 'infinitivo': el infinitivo completo (llegar-é).",
+  "tiempos": {
+    "presente": {
+      "base": "raiz",
+      "ar": ["o", "as", "a", "amos", "an"],
+      "er": ["o", "es", "e", "emos", "en"],
+      "ir": ["o", "es", "e", "imos", "en"]
+    },
+    "pasado": {
+      "base": "raiz",
+      "ar": ["é", "aste", "ó", "amos", "aron"],
+      "er": ["í", "iste", "ió", "imos", "ieron"],
+      "ir": ["í", "iste", "ió", "imos", "ieron"]
+    },
+    "futuro": {
+      "base": "infinitivo",
+      "ar": ["é", "ás", "á", "emos", "án"],
+      "er": ["é", "ás", "á", "emos", "án"],
+      "ir": ["é", "ás", "á", "emos", "án"]
+    }
+  },
+
+  "_prioridad": "Si una forma pertenece a varios tiempos ('llegamos' es presente y pasado), se elige el primero de esta lista y se avisa en la traza (bitácora S-03).",
+  "prioridadTiempos": ["presente", "pasado", "futuro"],
+
+  "_perifrasis": "Futuro con 'ir a': auxiliar ir en presente + 'a' + infinitivo ('van a llegar').",
+  "perifrasisFuturo": { "auxiliar": "ir", "tiempoAuxiliar": "presente", "enlace": "a" },
+
+  "_sujetoOmitido": "Qué sujeto se deduce cuando el español no lo escribe, según la persona del verbo. En las preguntas, la 3ª persona se toma como dirigida a quien escucha: '¿Cuándo llegan?' -> ustedes (bitácora S-01).",
+  "sujetoOmitido": {
+    "pregunta":   { "1s": "1s", "2s": "2s", "3s": "2s", "1p": "1p", "3p": "2p" },
+    "afirmacion": { "1s": "1s", "2s": "2s", "3s": "3s", "1p": "1p", "3p": "3p" }
+  }
+}
