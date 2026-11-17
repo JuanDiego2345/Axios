@@ -1,0 +1,52 @@
+import 'dart:io';
+import 'package:test/test.dart';
+import '../../lib/bd/conexion.dart';
+import '../../lib/bd/lexico_repo.dart';
+
+File _csv(String nombre, String contenido) {
+  final dir = Directory.systemTemp.createTempSync();
+  return File('${dir.path}/$nombre')..writeAsStringSync(contenido);
+}
+
+void main() {
+  test('carga el léxico y lo encuentra con buscar', () {
+    final csv = _csv('lex.csv',
+        'lema_es,categoria,kethari,ozh\nagua,sustantivo,ilu,ba\n');
+    final db = abrirBd(':memory:');
+    final repo = LexicoRepo(db);
+
+    expect(repo.cargarLexico(csv.path), 1);
+    final t = repo.buscar('agua');
+    expect(t?.kethari, 'ilu');
+    expect(t?.ozh, 'ba');
+    expect(repo.buscar('inexistente'), isNull);
+    db.close();
+  });
+
+  test('cargar de nuevo con cambios conserva el historial', () {
+    final v1 = _csv('v1.csv',
+        'lema_es,categoria,kethari,ozh\nagua,sustantivo,ilu,ba\n');
+    final v2 = _csv('v2.csv',
+        'lema_es,categoria,kethari,ozh\nagua,sustantivo,ilun,ba\n');
+    final db = abrirBd(':memory:');
+    final repo = LexicoRepo(db);
+
+    repo.cargarLexico(v1.path, fecha: '2026-11-01');
+    repo.cargarLexico(v2.path, fecha: '2026-11-10');
+
+    expect(repo.buscar('agua', fecha: '2026-11-05')?.kethari, 'ilu');
+    expect(repo.buscar('agua', fecha: '2026-11-15')?.kethari, 'ilun');
+    db.close();
+  });
+
+  test('carga las señales y las lista', () {
+    final csv = _csv('sen.csv',
+        'nombre,significado\nalerta,peligro cercano\nllamada,pedir ayuda\n');
+    final db = abrirBd(':memory:');
+    final repo = LexicoRepo(db);
+
+    expect(repo.cargarSenales(csv.path), 2);
+    expect(repo.senalesVigentes().length, 2);
+    db.close();
+  });
+}
