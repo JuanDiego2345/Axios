@@ -19,14 +19,30 @@ class LexicoRepo {
   String _hoy() => DateTime.now().toIso8601String().substring(0, 10);
 
   // Lee un archivo CSV y separa sus columnas.
-  List<List<String>> _leerCsv(String ruta) {
+    List<List<String>> _leerCsv(String ruta, {int? columnas}) {
     final lineas = File(ruta).readAsLinesSync();
 
     return lineas
         .skip(1)
         .where((l) => l.trim().isNotEmpty)
-        .map((l) => l.split(',').map((c) => c.trim()).toList())
+        .map((l) => columnas == null
+            ? l.split(',').map((c) => c.trim()).toList()
+            : _partir(l, columnas))
         .toList();
+  }
+
+  // Parte una línea en máximo [max] campos; el último conserva sus comas.
+  List<String> _partir(String linea, int max) {
+    final partes = <String>[];
+    var resto = linea;
+    while (partes.length < max - 1) {
+      final i = resto.indexOf(',');
+      if (i < 0) break;
+      partes.add(resto.substring(0, i).trim());
+      resto = resto.substring(i + 1);
+    }
+    partes.add(resto.trim());
+    return partes;
   }
 
   // Carga el léxico y conserva las versiones anteriores.
@@ -98,49 +114,39 @@ class LexicoRepo {
   }
 
   // Carga señales y conserva sus versiones anteriores.
+    // Carga señales (dia, voz, transcripcion, salida) sin repetir las que ya están.
   int cargarSenales(String ruta, {String? fecha}) {
     final hoy = fecha ?? _hoy();
-    final filas = _leerCsv(ruta);
+    final filas = _leerCsv(ruta, columnas: 4);
+    var nuevas = 0;
 
     db.execute('BEGIN');
 
     try {
-      for (final f in filas) {
-        if (f.length < 2) {
-          throw FormatException('Fila inválida en las señales: $f');
-        }
-
-        final nombre = f[0];
-        final significado = f[1];
-
-        final vigente = db.select(
-          'SELECT significado FROM senal '
-          'WHERE nombre = ? AND vigente_hasta IS NULL',
-          [nombre],
-        );
-
-        if (vigente.isNotEmpty &&
-            vigente.first['significado'] == significado) {
-          continue;
-        }
-
-        db.execute(
-          'UPDATE senal SET vigente_hasta = ? '
-          'WHERE nombre = ? AND vigente_hasta IS NULL',
-          [hoy, nombre],
-        );
-
-        db.execute(
-          'INSERT INTO senal (nombre, significado, vigente_desde) '
-          'VALUES (?, ?, ?)',
-          [nombre, significado, hoy],
-        );
-      }
-
       db.execute(
         'INSERT INTO carga (archivo, fecha, filas) VALUES (?, ?, ?)',
         [ruta, hoy, filas.length],
       );
+      final cargaId = db.lastInsertRowId;
+
+      for (final f in filas) {
+        if (f.length < 4) {
+          throw FormatException('Fila inválida en las señales: $f');
+        }
+
+        final dia = int.tryParse(f[0]);
+        if (dia == null) {
+          throw FormatException('Día inválido en las señales: $f');
+        }
+
+        db.execute(
+          'INSERT OR IGNORE INTO senal '
+          '(dia, voz, transcripcion, salida, carga_id) '
+          'VALUES (?, ?, ?, ?, ?)',
+          [dia, f[1], f[2], f[3], cargaId],
+        );
+        nuevas += db.updatedRows;
+      }
 
       db.execute('COMMIT');
     } catch (e) {
@@ -148,7 +154,7 @@ class LexicoRepo {
       rethrow;
     }
 
-    return filas.length;
+    return nuevas;
   }
 
   // Busca una palabra y permite consultar su traducción por fecha.
@@ -178,19 +184,21 @@ class LexicoRepo {
   }
 
   // Devuelve las señales que están vigentes.
-  List<Map<String, String?>> senalesVigentes() {
+    // Lista las señales registradas, en orden de día.
+  List<Map<String, dynamic>> listarSenales() {
     return db
         .select(
-          'SELECT nombre, significado FROM senal '
-          'WHERE vigente_hasta IS NULL ORDER BY id',
+          'SELECT dia, voz, transcripcion, salida '
+          'FROM senal ORDER BY dia, id',
         )
         .map((r) => {
-              'nombre': r['nombre'] as String?,
-              'significado': r['significado'] as String?,
+              'dia': r['dia'],
+              'voz': r['voz'],
+              'transcripcion': r['transcripcion'],
+              'salida': r['salida'],
             })
         .toList();
   }
-
   // Consulta todas las versiones que ha tenido una palabra.
   List<Map<String, dynamic>> historialPalabra(String lema) {
     final resultados = db.select(

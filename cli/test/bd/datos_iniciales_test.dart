@@ -19,13 +19,17 @@ void main() {
     db.close();
   });
 
-  test('el archivo de señales tiene las 15 señales del manual', () {
-    final lineas = File('datos/senales_inicial.csv')
-        .readAsLinesSync()
-        .where((l) => l.trim().isNotEmpty)
-        .toList();
+  test('las 15 señales del manual se cargan en la BD', () {
+    final db = abrirBd(':memory:');
+    final repo = LexicoRepo(db);
 
-    expect(lineas.first, 'dia,voz,transcripcion,salida');
-    expect(lineas.length - 1, 15);
+    expect(repo.cargarSenales('datos/senales_inicial.csv'), 15);
+    expect(repo.cargarSenales('datos/senales_inicial.csv'), 0);
+
+    final s = repo.listarSenales();
+    expect(s.length, 15);
+    expect(s.any((x) => x['voz'] == 'Desconocida' && x['dia'] == 6), isTrue);
+
+    db.close();
   });
 }

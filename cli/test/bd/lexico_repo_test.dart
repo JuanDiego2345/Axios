@@ -53,17 +53,48 @@ void main() {
     db.close();
   });
 
-  test('carga las señales y las lista', () {
+   test('carga las señales con día y voz y las lista', () {
     final csv = _csv(
       'sen.csv',
-      'nombre,significado\nalerta,peligro cercano\nllamada,pedir ayuda\n',
+      'dia,voz,transcripcion,salida\n'
+      '1,Kethari,anir ombraesh salok,Nosotros enviamos mensajes.\n'
+      '6,Desconocida,,Ya los escuchamos.\n',
     );
 
     final db = abrirBd(':memory:');
     final repo = LexicoRepo(db);
 
     expect(repo.cargarSenales(csv.path), 2);
-    expect(repo.senalesVigentes().length, 2);
+
+    final s = repo.listarSenales();
+    expect(s.length, 2);
+    expect(s[0]['voz'], 'Kethari');
+    expect(s[1]['dia'], 6);
+    expect(s[1]['transcripcion'], '');
+
+    db.close();
+  });
+
+  test('un archivo nuevo agrega solo las señales que no estaban', () {
+    final v1 = _csv(
+      'v1.csv',
+      'dia,voz,transcripcion,salida\n'
+      '1,Kethari,anir ombraesh salok,Nosotros enviamos mensajes.\n',
+    );
+    final v2 = _csv(
+      'v2.csv',
+      'dia,voz,transcripcion,salida\n'
+      '1,Kethari,anir ombraesh salok,Nosotros enviamos mensajes.\n'
+      '8,Ozh,bo mar ʔen,Yo espero. [mar]\n',
+    );
+
+    final db = abrirBd(':memory:');
+    final repo = LexicoRepo(db);
+
+    expect(repo.cargarSenales(v1.path), 1);
+    expect(repo.cargarSenales(v2.path), 1);
+    expect(repo.listarSenales().length, 2);
+    expect(repo.historialCargas().length, 2);
 
     db.close();
   });
