@@ -237,4 +237,51 @@ class LexicoRepo {
       'filas': r['filas'],
     }).toList();
   }
+    // Registra una pregunta recibida con su corrección, traducciones y validación.
+  int registrarPregunta({
+    required String original,
+    String? corregido,
+    String? kethari,
+    String? ozh,
+    String? validacion,
+    String? fecha,
+  }) {
+    db.execute(
+      'INSERT INTO pregunta (fecha, texto_original, texto_corregido, '
+      'traduccion_kethari, traduccion_ozh, validacion) '
+      'VALUES (?, ?, ?, ?, ?, ?)',
+      [
+        fecha ?? DateTime.now().toIso8601String(),
+        original,
+        corregido,
+        kethari,
+        ozh,
+        validacion,
+      ],
+    );
+    return db.lastInsertRowId;
+  }
+
+  // Lista las preguntas, de la más antigua a la más reciente.
+  // Con [desde] (por ejemplo '2026-11-18') solo trae las de esa fecha en adelante.
+  List<Map<String, dynamic>> historialPreguntas({String? desde}) {
+    final filas = desde == null
+        ? db.select('SELECT * FROM pregunta ORDER BY fecha, id')
+        : db.select(
+            'SELECT * FROM pregunta WHERE fecha >= ? ORDER BY fecha, id',
+            [desde],
+          );
+
+    return filas
+        .map((r) => {
+              'id': r['id'],
+              'fecha': r['fecha'],
+              'original': r['texto_original'],
+              'corregido': r['texto_corregido'],
+              'kethari': r['traduccion_kethari'],
+              'ozh': r['traduccion_ozh'],
+              'validacion': r['validacion'],
+            })
+        .toList();
+  }
 }
