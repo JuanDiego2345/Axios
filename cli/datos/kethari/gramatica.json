@@ -1,0 +1,18 @@
+{
+  "_nota": "Afijos y partículas de Kethari (manual v0.7, sección 3.3). El enunciado prohíbe escribir las reglas en el código, así que las piezas que se pegan a las palabras viven aquí. El orden de la oración (sujeto, objeto, verbo) es el algoritmo del generador.",
+
+  "verbo": {
+    "presente": "",
+    "pasado": "ok",
+    "futuro": "ime",
+    "negacion": "nu"
+  },
+
+  "sustantivo": {
+    "plural": "esh"
+  },
+
+  "pregunta": {
+    "particula": "ka"
+  }
+}

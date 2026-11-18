@@ -1,0 +1,48 @@
+{
+  "_nota": "Léxico Kethari del manual de decodificación v0.7 (sección 3.1). No es código: el generador lo lee al arrancar. Las llaves son los CONCEPTOS del árbol intermedio (docs/interfaces-sintactico.md). Mientras la base de datos no guarde el léxico por concepto, este archivo es la fuente; después se importa a SQLite y el generador no cambia (ver bitácora K-04).",
+
+  "_pronombres": "Códigos: 1s yo, 2s tú/usted, 3s él/ella, 1p nosotros, 2p ustedes, 3p ellos/ellas. El manual da anul y anir para 'nosotros'; se usa anir (bitácora K-01).",
+  "pronombres": {
+    "1s": "an",
+    "2s": "ul",
+    "3s": "ir",
+    "1p": "anir",
+    "2p": "ulesh",
+    "3p": "iresh"
+  },
+
+  "sustantivos": {
+    "PLANETA": "vael",
+    "ESTRELLA": "sorin",
+    "TIERRA": "teka",
+    "AGUA": "dahl",
+    "NAVE": "kum",
+    "MENSAJE": "ombra",
+    "PAZ": "parn",
+    "CICLO": "lun",
+    "ANIO": "sorlun",
+    "LUZ": "zett",
+    "CRIATURA": "yorr",
+    "HOGAR": "hosk"
+  },
+
+  "verbos": {
+    "VENIR": "vin",
+    "ENVIAR": "sal",
+    "VER": "kor",
+    "QUERER": "thal",
+    "SER": "mi",
+    "HABLAR": "lar",
+    "ESCUCHAR": "rhu",
+    "ESPERAR": "tep",
+    "VISITAR": "dun"
+  },
+
+  "interrogativos": {
+    "QUE": "kel",
+    "CUANDO": "kom",
+    "DONDE": "dor",
+    "CUANTOS": "kai",
+    "QUIEN": "sem"
+  }
+}
