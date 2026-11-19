@@ -13,9 +13,9 @@ final fase = FaseLexica(vocabularioEspanol);
 final r = fase.procesar('¿Kuando LLEGAN las nabes?');
 
 r.tokens;               // List<Token>  -> lo que consume el parser
-r.normalizado;          // '¿kuando llegan las nabes?'
+r.normalizado;          // '¿kuando llegan las nabes?' (cantidades aún en letras)
 r.correcciones;         // [kuando -> cuando (d=1), nabes -> naves (d=1)]
-r.numerosConvertidos;   // cantidades en letras pasadas a cifras
+r.numerosConvertidos;   // cantidades en letras pasadas a cifras, después de corregir
 r.palabrasDesconocidas; // palabras sin corrección posible
 r.erroresLexicos;       // caracteres que el AFD no reconoce
 r.traza;                // transiciones del AFD si se llamó con conTraza: true
@@ -30,14 +30,14 @@ r.traza;                // transiciones del AFD si se llamó con conTraza: true
 | `posicion` | `int` | Índice desde 0 en el texto normalizado |
 | `columna` | `int` | `posicion + 1`, para mensajes |
 | `valor` | `int?` | Solo en `numero` |
-| `original` | `String?` | Lexema antes de corregir; `null` si no se corrigió |
+| `original` | `String?` | Cómo venía escrito antes de corregir o de convertir a cifra (`nabes`, `dos mil quinse`); `null` si no cambió |
 
 Reglas para quien consume los tokens:
 
 1. La lista **siempre termina en un token `fin`**. El parser no tiene que revisar límites.
 2. El léxico **no clasifica** las palabras (pronombre, verbo, interrogativo...). Eso necesita el vocabulario de la BD y lo hace el parser. Así el léxico no lleva vocabulario dentro del código.
 3. Las palabras llegan **sin tildes**: `que`/`qué` y `cuando`/`cuándo` son el mismo lexema. Si es pregunta o no se decide por `¿`, `?` y la posición de la palabra, no por la tilde.
-4. Las cantidades en letras llegan como `numero` (`dos mil quince` → `numero(2015)`). `un`/`una` sueltos llegan como `palabra` (son artículos).
+4. Las cantidades en letras llegan como `numero` (`dos mil quince` → `numero(2015)`), también si estaban mal escritas (`quinse` → `numero(15)`, decisión L-07). `un`/`una` sueltos llegan como `palabra` (son artículos).
 5. Un token `desconocido` no detiene el análisis. El sistema debe responder explicando que hay un carácter inválido (condición 1 de Axios: ninguna pregunta se pierde).
 
 ## Lo que el léxico necesita de otros módulos
