@@ -37,9 +37,16 @@ class Normalizador {
 
   static final RegExp _espacios = RegExp(r'\s+');
 
+  /// "¿¿" o "¿ ¿" seguidos.
+  static final RegExp _abreRepetido = RegExp(r'¿(\s*¿)+');
+
+  /// "??" o "? ?" seguidos.
+  static final RegExp _cierraRepetido = RegExp(r'\?(\s*\?)+');
+
   /// Normaliza el texto antes del autómata. No toca las cantidades en letras:
   /// esas se convierten con [normalizarNumeros] después del corrector.
-  String normalizar(String texto) {
+  /// Si se pasa [ajustes], anota ahí cada arreglo de signos que hizo.
+  String normalizar(String texto, {List<String>? ajustes}) {
     var t = normalizarPalabra(texto);
     t = t.replaceAll(_signosDescartados, ' ');
 
@@ -49,7 +56,33 @@ class Normalizador {
       t = t.replaceAllMapped(_separadorMiles, (m) => '${m[1]}${m[2]}');
     } while (t != antes);
 
-    return t.replaceAll(_espacios, ' ').trim();
+    t = t.replaceAll(_espacios, ' ').trim();
+    return _ajustarSignos(t, ajustes);
+  }
+
+  /// Arregla signos de interrogación mal puestos (decisión L-10). Los signos
+  /// que faltan no se inventan: el parser decide si es pregunta.
+  String _ajustarSignos(String t, List<String>? ajustes) {
+    var r = t;
+
+    // Teclado sin "¿": "?cuando llegan?" -> "¿cuando llegan?".
+    if (r.length > 1 && r.startsWith('?')) {
+      r = '¿${r.substring(1)}';
+      ajustes?.add('"?" al inicio cambiado por "¿"');
+    }
+    // Signos invertidos al final: "cuando llegan¿" -> "cuando llegan?".
+    if (r.length > 1 && r.endsWith('¿')) {
+      r = '${r.substring(0, r.length - 1)}?';
+      ajustes?.add('"¿" al final cambiado por "?"');
+    }
+
+    final sinAbreRepetido = r.replaceAll(_abreRepetido, '¿');
+    if (sinAbreRepetido != r) ajustes?.add('"¿" repetidos unidos en uno');
+    r = sinAbreRepetido;
+
+    final sinCierraRepetido = r.replaceAll(_cierraRepetido, '?');
+    if (sinCierraRepetido != r) ajustes?.add('"?" repetidos unidos en uno');
+    return sinCierraRepetido;
   }
 
   /// Solo minúsculas y sin tildes. Lo usan también el corrector y el parser
