@@ -25,6 +25,10 @@ class ResultadoLexico {
   /// [TipoToken.fin]. Esto es lo que consume el parser.
   final List<Token> tokens;
 
+  /// Signos de interrogación que el normalizador arregló
+  /// ("?" al inicio cambiado por "¿", signos repetidos...).
+  final List<String> ajustesSignos;
+
   /// Cantidades en letras que se pasaron a cifras.
   final List<ConversionNumero> numerosConvertidos;
 
@@ -44,6 +48,7 @@ class ResultadoLexico {
     required this.original,
     required this.normalizado,
     required this.tokens,
+    required this.ajustesSignos,
     required this.numerosConvertidos,
     required this.correcciones,
     required this.palabrasDesconocidas,
@@ -71,8 +76,10 @@ class FaseLexica {
             normalizador: normalizador);
 
   ResultadoLexico procesar(String pregunta, {bool conTraza = false}) {
-    final normalizado = normalizador.normalizar(pregunta);
-    final traza = <String>[];
+    final ajustes = <String>[];
+    final normalizado = normalizador.normalizar(pregunta, ajustes: ajustes);
+    final traza = [for (final a in ajustes) 'signos: $a'];
+    if (!conTraza) traza.clear();
     final tokens =
         analizador.analizar(normalizado, traza: conTraza ? traza : null);
     final correccion = corrector.corregir(tokens);
@@ -91,6 +98,7 @@ class FaseLexica {
       original: pregunta,
       normalizado: normalizado,
       tokens: numeros.tokens,
+      ajustesSignos: ajustes,
       numerosConvertidos: numeros.conversiones,
       correcciones: correccion.correcciones,
       palabrasDesconocidas: correccion.desconocidas,

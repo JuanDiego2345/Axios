@@ -48,6 +48,33 @@ void main() {
       expect(n.normalizar('2,015 naves'), '2015 naves');
     });
 
+    test('teclado sin ¿: "?" al inicio pasa a "¿" (L-10)', () {
+      final ajustes = <String>[];
+      expect(n.normalizar('?Cuando llegan?', ajustes: ajustes),
+          '¿cuando llegan?');
+      expect(ajustes, ['"?" al inicio cambiado por "¿"']);
+    });
+
+    test('"¿" al final pasa a "?" (L-10)', () {
+      expect(n.normalizar('cuando llegan¿'), 'cuando llegan?');
+    });
+
+    test('signos repetidos se unen (L-10)', () {
+      expect(n.normalizar('¿¿Cuándo llegan???'), '¿cuando llegan?');
+      expect(n.normalizar('¿ ¿cuando llegan? ?'), '¿cuando llegan?');
+      expect(n.normalizar('?¿cuando llegan?'), '¿cuando llegan?');
+      expect(n.normalizar('¿¡Qué quieren!?'), '¿ que quieren ?');
+    });
+
+    test('no inventa signos que faltan', () {
+      final ajustes = <String>[];
+      expect(n.normalizar('cuando llegan', ajustes: ajustes), 'cuando llegan');
+      expect(n.normalizar('ustedes vienen?', ajustes: ajustes),
+          'ustedes vienen?');
+      expect(n.normalizar('?'), '?');
+      expect(ajustes, isEmpty);
+    });
+
     test('no convierte cantidades en letras: eso va después (L-07)', () {
       expect(n.normalizar('Quince naves'), 'quince naves');
     });
