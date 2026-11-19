@@ -40,6 +40,14 @@ Formato: problema, opciones, decisión y prueba que la demuestra
 - **Decisión:** las palabras numéricas del español son reglas de lectura de cantidades, no léxico de traducción. Viven en `numeros_texto.dart`. Los números en Kethari y Ozh sí van en la BD.
 - **Pendiente:** confirmar con el docente; si no lo acepta, se pasan a la BD.
 
-### L-07 · 12/11/2026 · Cantidades en letras mal escritas (limitación conocida)
-- **Problema:** el normalizador se ejecuta antes que el corrector, así que "quinse naves" no se convierte en 15.
-- **Decisión:** por ahora se acepta como limitación. Se puede resolver en la semana 2 volviendo a convertir números después de corregir.
+### L-07 · 12/11/2026 → resuelta el 19/11/2026 · Cantidades en letras mal escritas
+- **Problema:** el normalizador convertía las cantidades antes de que actuara el corrector, así que "quinse naves" no se convertía en 15. Volver a convertir después de corregir no bastaba: "dos mil quinse" quedaba como `2000` + `15`.
+- **Opciones:** (a) dejarlo como limitación; (b) una segunda conversión después del corrector; (c) separar el normalizador en dos momentos: el texto (tildes, signos) antes del autómata, y las cantidades después del corrector.
+- **Decisión (19/11):** (c). Orden final: normalizar texto → AFD → corregir → normalizar números. Las palabras numéricas se agregan al vocabulario del corrector para que se corrijan en vez de confundirse con otras palabras. Las posiciones de los tokens se cuentan sobre el texto antes de convertir (L-03), y el token de número toma la posición de su primera palabra.
+- **Prueba:** `fase_lexica_test.dart` → "corrige una cantidad mal escrita y luego la convierte", "error dentro de una cantidad de varias palabras".
+
+### L-08 · 19/11/2026 · Dónde se usan expresiones regulares
+- **Problema:** el enunciado solo permite expresiones regulares en la normalización, y la primera versión de `numeros_texto.dart` las usaba para partir el texto.
+- **Opciones:** (a) defenderlo porque la conversión de números es parte del normalizador; (b) quitarlas.
+- **Decisión:** (b). Con L-07 la lectura de cantidades trabaja sobre la lista de palabras que entrega el autómata, así que ya no necesita expresiones regulares. Ahora las únicas del módulo están en `Normalizador.normalizar` (signos, separadores de miles y espacios). El AFD y el corrector nunca las usaron.
+- **Prueba:** `grep -rn RegExp cli/lib/lexico` solo encuentra `normalizador.dart`.
