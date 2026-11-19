@@ -85,6 +85,10 @@ void main() {
       expect(arbol('ustedes vienen?').modo, Modo.preguntaSiNo);
     });
 
+    test('sin ningún signo se lee como afirmación (bitácora S-12)', () {
+      expect(arbol('ustedes vienen').modo, Modo.afirmacion);
+    });
+
     test('verbo intransitivo: el sustantivo de después es el sujeto', () {
       final o = arbol('¿Llegaron las naves?');
       expect((o.sujeto as Nominal).concepto, 'NAVE');
