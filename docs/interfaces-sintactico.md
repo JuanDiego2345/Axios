@@ -117,14 +117,14 @@ la base de datos:
   `NAVE`, `MENSAJE`, `PAZ`, `CICLO`, `ANIO`, `LUZ`, `CRIATURA`, `HOGAR`.
 - **Interrogativos:** `QUE`, `QUIEN`, `CUANDO`, `DONDE`, `CUANTOS`.
 
-## Preguntas abiertas para el generador (Heili)
+## Preguntas para el generador (Samuel)
 
 1. **`anul` / `anir`.** El español no distingue si "nosotros" incluye a quien
    escucha, así que el árbol no lo dice: llega `Pronominal(primera, plural)`.
-   Cuando la Tierra habla con los alienígenas, "nosotros" no los incluye, y
-   eso apunta a `anir`. Es una decisión del generador.
+   El generador eligió `anir`, porque cuando la Tierra habla con los
+   alienígenas "nosotros" no los incluye (bitácora K-01).
 2. **Partícula de Ozh en preguntas** (`zi` / `mar` / `tho`): el árbol no la
-   decide. Las dos preguntas registradas usan `mar`.
+   decide. Las preguntas registradas usan `mar` (día 5) y `tho` (día 9).
 3. **Kethari en base 6:** `cantidad` llega en base 10 (15); la conversión a
    `ra-sel` es del generador.
 
