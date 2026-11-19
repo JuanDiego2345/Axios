@@ -14,6 +14,7 @@ final r = fase.procesar('¿Kuando LLEGAN las nabes?');
 
 r.tokens;               // List<Token>  -> lo que consume el parser
 r.normalizado;          // '¿kuando llegan las nabes?' (cantidades aún en letras)
+r.ajustesSignos;        // ['"?" al inicio cambiado por "¿"', ...] para el historial
 r.correcciones;         // [kuando -> cuando (d=1), nabes -> naves (d=1)]
 r.numerosConvertidos;   // cantidades en letras pasadas a cifras, después de corregir
 r.palabrasDesconocidas; // palabras sin corrección posible

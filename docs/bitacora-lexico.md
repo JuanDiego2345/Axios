@@ -51,3 +51,15 @@ Formato: problema, opciones, decisión y prueba que la demuestra
 - **Opciones:** (a) defenderlo porque la conversión de números es parte del normalizador; (b) quitarlas.
 - **Decisión:** (b). Con L-07 la lectura de cantidades trabaja sobre la lista de palabras que entrega el autómata, así que ya no necesita expresiones regulares. Ahora las únicas del módulo están en `Normalizador.normalizar` (signos, separadores de miles y espacios). El AFD y el corrector nunca las usaron.
 - **Prueba:** `grep -rn RegExp cli/lib/lexico` solo encuentra `normalizador.dart`.
+
+### L-09 · 19/11/2026 · ñ ausente
+- **Problema:** el enunciado dice que muchas preguntas llegan "sin ñ". Con Levenshtein solo, "ano" empata con "uno" (las dos a distancia 1) y "anio" (distancia 2, 4 letras) no se corrige.
+- **Opciones:** (a) dejarlo a Levenshtein; (b) bajar el costo de cambiar n por ñ; (c) antes de Levenshtein, buscar en una tabla las formas en que se escribe una palabra con ñ en un teclado sin ella (n, ni, nn, ny).
+- **Decisión:** (c). Es el error más común, así que se revisa primero y no depende del umbral. Si la forma sin ñ ya es una palabra válida, no se cambia: el corrector nunca altera palabras válidas (rúbrica, criterio 6). La tabla se arma desde el vocabulario, no se escribe en el código.
+- **Prueba:** `corrector_test.dart` → grupo "ñ ausente"; `signos_y_enie_test.dart` → "anos se corrige a años".
+
+### L-10 · 19/11/2026 · Signos de interrogación ausentes o mal puestos
+- **Problema:** con teclados sin "¿" llega "?Cuando llegan?", y también "¿¿cuándo llegan??". El parser rechazaba los dos.
+- **Opciones:** (a) que el parser acepte cualquier combinación; (b) arreglarlos en el normalizador; (c) además, inventar los signos que faltan.
+- **Decisión:** (b), sin (c). El normalizador cambia "?" al inicio por "¿", "¿" al final por "?" y une los repetidos, y anota cada arreglo en `ajustesSignos` para el historial. No inventa signos: si es pregunta o no lo decide el parser por la palabra interrogativa o por un solo signo. Una pregunta de sí o no sin ningún signo ("ustedes vienen") no se puede distinguir de una afirmación; queda como afirmación (decisión del parser).
+- **Prueba:** `normalizador_test.dart` → pruebas L-10; `signos_y_enie_test.dart` → grupo "signos de interrogación mal puestos".
