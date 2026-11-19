@@ -158,6 +158,44 @@ void main() {
     });
   });
 
+  group('preposición antes del interrogativo (bitácora S-13)', () {
+    test('"¿A quién escuchan ustedes?" (señal del día 9): quién es el objeto',
+        () {
+      final o = arbol('¿A quién escuchan ustedes?');
+      expect(o.interrogativo, 'QUIEN');
+      expect(o.rolInterrogativo, RolInterrogativo.objeto);
+      expect(o.objeto, isA<Incognita>());
+      expect(o.sujeto, ustedes);
+      expect(o.verbo, 'ESCUCHAR');
+      expect(o.tiempo, Tiempo.presente);
+    });
+
+    test('sin "a", quién sigue siendo el sujeto', () {
+      final o = arbol('¿Quién escucha?');
+      expect(o.rolInterrogativo, RolInterrogativo.sujeto);
+      expect(o.sujeto, isA<Incognita>());
+    });
+
+    test('"¿A quién vieron?": objeto y sujeto omitido -> ustedes', () {
+      final o = arbol('¿A quién vieron?');
+      expect(o.rolInterrogativo, RolInterrogativo.objeto);
+      expect(o.sujeto, ustedesInferido);
+      expect(o.tiempo, Tiempo.pasado);
+    });
+
+    test('sin tildes ni signos: "a quien escuchan"', () {
+      final o = arbol('a quien escuchan');
+      expect(o.modo, Modo.preguntaAbierta);
+      expect(o.rolInterrogativo, RolInterrogativo.objeto);
+    });
+
+    test('"¿De dónde vienen?" sigue sin traducirse (bitácora S-07)', () {
+      final r = analizar('¿De dónde vienen?');
+      expect(r.arbol, isNull);
+      expect(r.error!.mensaje, contains('"de"'));
+    });
+  });
+
   group('futuro con "ir a"', () {
     test('"¿Van a llegar quince naves?"', () {
       final o = arbol('¿Van a llegar quince naves?');
