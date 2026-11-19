@@ -13,8 +13,8 @@ enum TipoToken {
   /// Secuencia de letras: `cuando`, `naves`, `llegaran`.
   palabra,
 
-  /// Secuencia de dígitos. Las cantidades en letras ya llegan convertidas
-  /// por el normalizador ("dos mil quince" -> `2015`).
+  /// Cantidad. Puede venir escrita con dígitos (`15`) o en letras: el
+  /// normalizador une "dos mil quince" en un solo token `2015`.
   numero,
 
   /// Signo `¿`.
@@ -51,7 +51,8 @@ class Token {
   /// Valor numérico. Solo tiene valor cuando [tipo] es [TipoToken.numero].
   final int? valor;
 
-  /// Lexema antes de la corrección ortográfica. Es `null` si no se corrigió.
+  /// Cómo venía escrito antes de corregir o de convertir a cifra
+  /// (`nabes`, `dos mil quinse`). Es `null` si el token no cambió.
   final String? original;
 
   const Token({
@@ -65,7 +66,7 @@ class Token {
   /// Columna (desde 1) para mostrar en mensajes de error.
   int get columna => posicion + 1;
 
-  /// Indica si el corrector cambió este token.
+  /// Indica si el corrector o el normalizador de números cambió este token.
   bool get fueCorregido => original != null;
 
   /// Copia del token con el lexema corregido, guardando el lexema original.
