@@ -34,6 +34,28 @@ void main() {
     expect(r.numerosConvertidos.single.valor, 6);
   });
 
+  test('corrige una cantidad mal escrita y luego la convierte (L-07)', () {
+    final r = fase.procesar('Llegaron quinse naves');
+    expect(lexemas(r), ['llegaron', '15', 'naves']);
+    expect(r.tokens[1].tipo, TipoToken.numero);
+    expect(r.tokens[1].valor, 15);
+    expect(r.tokens[1].original, 'quinse');
+    expect(r.correcciones.single.toString(), 'quinse -> quince (d=1)');
+    expect(r.numerosConvertidos.single.valor, 15);
+  });
+
+  test('error dentro de una cantidad de varias palabras (L-07)', () {
+    final r = fase.procesar('dos mil quinse naves');
+    expect(lexemas(r), ['2015', 'naves']);
+    expect(r.tokens.first.original, 'dos mil quinse');
+  });
+
+  test('las palabras numéricas bien escritas no se corrigen', () {
+    final r = fase.procesar('esperaremos seis ciclos');
+    expect(r.correcciones, isEmpty);
+    expect(r.palabrasDesconocidas, isEmpty);
+  });
+
   test('reporta caracteres desconocidos y palabras fuera del vocabulario', () {
     final r = fase.procesar('queremos paz # zzzz');
     expect(r.erroresLexicos.single.lexema, '#');
@@ -49,6 +71,9 @@ void main() {
   test('modo traza', () {
     final r = fase.procesar('paz', conTraza: true);
     expect(r.traza, isNotEmpty);
+    final t = fase.procesar('quinse', conTraza: true).traza;
+    expect(t, contains('corrige quinse -> quince (d=1)'));
+    expect(t, contains('número "quince" -> 15'));
     expect(fase.procesar('paz').traza, isEmpty);
   });
 }

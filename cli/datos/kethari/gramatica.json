@@ -12,6 +12,12 @@
     "plural": "esh"
   },
 
+  "_numero": "Las cantidades encadenan cifras con guiones (manual 3.2) y van delante del sustantivo (3.3). La base sale de las señales: ra-sel = 15, ti-vo = 6 (bitácora K-05).",
+  "numero": {
+    "base": 6,
+    "separador": "-"
+  },
+
   "pregunta": {
     "particula": "ka"
   }
