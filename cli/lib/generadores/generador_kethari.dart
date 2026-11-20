@@ -7,6 +7,8 @@
 /// - Negación como prefijo del verbo (`nu-`).
 /// - Plural como sufijo del sustantivo (`-esh`).
 /// - El poseedor va delante de lo poseído. No hay artículos.
+/// - Los números van delante del sustantivo, en base 6 (`ra-sel` = 15), y el
+///   sustantivo lleva `-esh` también con número.
 /// - Las preguntas terminan en `ka`; la palabra interrogativa va al
 ///   principio.
 ///
@@ -16,6 +18,7 @@ library;
 
 import '../sintactico/arbol.dart';
 import 'fuente_kethari.dart';
+import 'numeros.dart';
 
 /// Lo que devuelve el generador: la oración o la explicación de por qué no
 /// la hay. [traza] cuenta cada decisión, para el modo traza.
@@ -146,9 +149,19 @@ class _Generacion {
       if (palabra != null) piezas.add(palabra);
     }
 
-    if (n.cantidad != null) {
-      pendientes.add('las cantidades en Kethari (base 6) todavía no se '
-          'generan (${n.cantidad} ${n.concepto}); ver bitácora K-05');
+    // "Los números van delante del sustantivo." Si hay poseedor, va antes
+    // del número: el poseedor abre el grupo (bitácora K-08).
+    final cantidad = n.cantidad;
+    if (cantidad != null) {
+      final numero = escribirNumero(cantidad, fuente.numeros, fuente.cifra);
+      if (numero.ok) {
+        piezas.add(numero.texto!);
+        traza.add('cantidad de $rol: $cantidad -> ${numero.texto} '
+            '(base ${fuente.numeros.base}: ${numero.cifrasUsadas.join(' ')})');
+      } else {
+        faltan.add('la cifra ${numero.cifrasDesconocidas.join(', ')} '
+            '(cantidad $cantidad)');
+      }
     }
 
     final raiz = fuente.sustantivo(n.concepto);

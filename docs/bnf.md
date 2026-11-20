@@ -1,5 +1,6 @@
 # Gramática del español (BNF)
 
+> **Versión 0.2 (19/11/2026).** Agrega la preposición antes del interrogativo.
 > **Versión 0.1 (12/11/2026).** Cubre lo de la semana 1: afirmaciones cortas,
 > preguntas de sí o no y preguntas con qué, quién, cuándo, dónde y cuántos,
 > en presente, pasado y futuro (incluido "ir a"), con negación, plurales,
@@ -15,7 +16,7 @@ recursivo: **cada regla de abajo es una función con el mismo nombre**
 ```bnf
 <entrada>        ::= [ "¿" ] <clausula> [ "?" ] [ "." ] FIN
 
-<clausula>       ::= <interrogativo> <nucleo>
+<clausula>       ::= [ PREPOSICION ] <interrogativo> <nucleo>
                    | <nucleo>
 
 <interrogativo>  ::= INTERROGATIVO_CANTIDAD [ SUSTANTIVO ]
@@ -73,6 +74,9 @@ mantiene LL(1) mirando un token más:
 - **"a"** después de `AUXILIAR_FUTURO` y antes de `INFINITIVO` es
   `ENLACE_FUTURO` ("van a llegar"); en cualquier otro lugar es `PREPOSICION`
   ("vieron a las criaturas").
+- Al principio de `<clausula>`, la `PREPOSICION` solo se lee si el token
+  siguiente es un interrogativo ("¿a quién escuchan?"). Si no, la cláusula
+  empieza por `<nucleo>`.
 
 ## Después de la gramática: funciones de cada grupo
 
@@ -88,7 +92,8 @@ sujeto y cuál el objeto**, porque el español permite varios órdenes
 5. La palabra interrogativa ocupa el hueco que su rol indica: `quién` el
    sujeto, `qué` el objeto (o el sujeto si el verbo no es transitivo),
    `cuántos` el sujeto con verbos intransitivos y el objeto con transitivos.
-   `cuándo` y `dónde` no ocupan ninguno.
+   `cuándo` y `dónde` no ocupan ninguno. Si lleva "a" delante, nunca es el
+   sujeto: "¿a quién escuchan ustedes?" pregunta por el objeto (bitácora S-13).
 6. Si no queda sujeto, se deduce de la persona del verbo con la tabla
    `sujetoOmitido` de `morfologia.json` (bitácora S-01).
 7. El verbo se elige entre sus análisis posibles por concordancia con el
@@ -101,6 +106,7 @@ sujeto y cuál el objeto**, porque el español permite varios órdenes
 | `queremos paz` | `<nucleo>` = `<grupo-verbal>`(queremos) `<complemento>`(paz) |
 | `¿cuando llegaran ustedes?` | `"¿"` `<interrogativo>`(cuando) `<nucleo>`(llegaran, ustedes) `"?"` |
 | `¿ustedes no vieron nuestro planeta?` | `"¿"` `<nucleo>`(`<sn>` ustedes, no, vieron, `<sn>` nuestro planeta) `"?"` |
+| `¿a quien escuchan ustedes?` | `"¿"` a `<interrogativo>`(quien) `<nucleo>`(escuchan, ustedes) `"?"` |
 | `¿cuantas naves llegaron?` | `"¿"` `<interrogativo>`(cuantas naves) `<nucleo>`(llegaron) `"?"` |
 | `van a llegar 15 naves` | `<grupo-verbal>`(van a llegar) `<complemento>`(15 naves) |
 
