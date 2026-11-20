@@ -5,3 +5,4 @@ library;
 
 export 'generadores/fuente_kethari.dart';
 export 'generadores/generador_kethari.dart';
+export 'generadores/numeros.dart';

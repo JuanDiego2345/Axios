@@ -84,6 +84,39 @@ void main() {
       expect(r2!.empatadas, ['casa', 'masa']); // empate real, orden alfabético
     });
 
+    group('ñ ausente (decisión L-09)', () {
+      final c = Corrector(['año', 'años', 'mañana', 'uno', 'ano']);
+
+      test('n, ni, nn y ny se corrigen a ñ', () {
+        expect(c.mejorCandidato('anos')!.palabra, 'años');
+        expect(c.mejorCandidato('manana')!.palabra, 'mañana');
+        expect(c.mejorCandidato('anio')!.palabra, 'año');
+        expect(c.mejorCandidato('annos')!.palabra, 'años');
+        expect(c.mejorCandidato('anyo')!.palabra, 'año');
+      });
+
+      test('gana sobre otro candidato a la misma distancia', () {
+        final sinAno = Corrector(['año', 'uno']);
+        final r = sinAno.mejorCandidato('ano')!;
+        expect(r.palabra, 'año');
+        expect(r.distancia, 1);
+        expect(r.empatadas, ['año']);
+      });
+
+      test('si la forma sin ñ es una palabra válida, no se toca', () {
+        final r = c.corregir([
+          const Token(tipo: TipoToken.palabra, lexema: 'ano', posicion: 0),
+        ]);
+        expect(r.correcciones, isEmpty);
+        expect(r.tokens.single.lexema, 'ano');
+      });
+
+      test('vale también para palabras cortas', () {
+        final r = Corrector(['ñu']).mejorCandidato('nu');
+        expect(r!.palabra, 'ñu');
+      });
+    });
+
     test('umbral según longitud', () {
       expect(Corrector.umbralPara(2), 0);
       expect(Corrector.umbralPara(3), 1);

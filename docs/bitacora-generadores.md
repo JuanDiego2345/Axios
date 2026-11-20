@@ -28,12 +28,20 @@ Pruebas en `cli/test/generadores/generador_kethari_test.dart`.
 - **Decisión:** (c). `FuenteKethari` dice qué necesita el generador y `FuenteKethariJson` lo lee de `datos/kethari/` (`lexico.json` y `gramatica.json` con `-ok`, `-ime`, `nu-`, `-esh`, `ka`). Cuando la BD tenga el léxico, se implementa la misma interfaz con SQLite y el generador no cambia. (b) está prohibido.
 - **Prueba:** todas las pruebas usan `FuenteKethariJson()` con los datos reales.
 
-### K-05 · 17/11/2026 · Cantidades (pendiente, semana 2)
-- **Problema:** Kethari no tiene palabras de 6 a 9 (nota 3.5) y las señales muestran base 6: `ra-sel` = 15 (2·6 + 3), `ti-vo` = 6.
-- **Decisión provisional:** en la semana 1 el generador no traduce oraciones con cantidad y lo explica, en vez de producir algo incorrecto. La conversión a base 6 entra en la semana 2 junto con los números de Ozh.
-- **Prueba:** "cantidades todavía no se generan".
+### K-05 · 17/11/2026 → resuelta el 19/11/2026 · Cantidades en Kethari
+- **Problema:** Kethari no tiene palabras de 6 a 9 (nota 3.5), pero el enunciado pide cantidades hasta 9.999 y la señal del día 7 habla de seis ciclos.
+- **Evidencia:** día 3 `ra-sel kumesh` = quince naves; día 7 `ti-vo lunesh` = seis ciclos. Con base 10 serían 23 y 10; con base 6 dan 2·6 + 3 = 15 y 1·6 + 0 = 6, justo lo que dice el decodificador.
+- **Opciones:** (a) base 10 y no traducir las cifras 6 a 9; (b) base 6, encadenando cifras con guiones (manual 3.2).
+- **Decisión (17/11):** en la semana 1 no traducir cantidades y explicarlo. **(19/11):** (b). Las dos señales coinciden con base 6, y con (a) no se podría decir ni "seis". La base (6), el separador (`-`) y las cifras (`vo`…`pai`) están en `datos/kethari/`; el algoritmo (`numeros.dart`) es el mismo que usará Ozh con base 10. El sustantivo lleva `-esh` también con número (manual 3.3). 9.999 = `ti-ti-mok-ti-mok-sel`.
+- **Prueba:** grupo "cantidades (base 6, bitácora K-05)" y `numeros_test.dart` → "señales del registro".
 
 ### K-06 · 17/11/2026 · Palabra sin traducción
 - **Problema:** el árbol puede traer un concepto sin palabra Kethari conocida.
 - **Decisión:** no se genera nada y el error dice qué concepto falta ("No se inventan palabras"). Se listan todos los que falten, no solo el primero.
 - **Prueba:** "verbo sin palabra Kethari: no traduce y lo explica".
+
+### K-08 · 19/11/2026 · Poseedor y número en el mismo sustantivo
+- **Problema:** "nuestras dos naves": el manual dice que el poseedor va delante de lo poseído y que el número va delante del sustantivo, pero no dice cuál va primero.
+- **Opciones:** (a) `anir ra kumesh` (poseedor, número, sustantivo); (b) `ra anir kumesh`.
+- **Decisión:** (a). El poseedor va delante de todo lo poseído ("dos naves"), y el número queda pegado al sustantivo, como en las señales de los días 3 y 7. Ninguna señal tiene los dos juntos; se revisa si llega una.
+- **Prueba:** "poseedor antes del número: anir ra kumesh (bitácora K-08)".

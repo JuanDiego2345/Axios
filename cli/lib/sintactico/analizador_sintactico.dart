@@ -146,7 +146,11 @@ class _Interrogativo {
   final Nominal? sustantivo;
   final Token token;
 
-  const _Interrogativo(this.entrada, this.sustantivo, this.token);
+  /// Va después de "a" ("¿a quién escuchan?"): entonces es el objeto.
+  final bool conPreposicion;
+
+  const _Interrogativo(this.entrada, this.sustantivo, this.token,
+      {this.conPreposicion = false});
 }
 
 class _Nucleo {
@@ -326,15 +330,26 @@ class _Parser {
         return _construir(clausula, esPregunta: signos);
       });
 
-  /// `<clausula> ::= <interrogativo> <nucleo> | <nucleo>`
+  /// `<clausula> ::= [ PREPOSICION ] <interrogativo> <nucleo> | <nucleo>`
+  ///
+  /// La preposición solo se lee si la sigue un interrogativo; si no, la
+  /// cláusula empieza por `<nucleo>` como antes.
   _Clausula _clausula() => _regla('clausula', () {
-        final interrogativo =
-            _es(actual, Categoria.interrogativo) ? _interrogativo() : null;
+        var conPreposicion = false;
+        if (_es(actual, Categoria.preposicion) &&
+            _es(_mirar(1), Categoria.interrogativo)) {
+          _consumir();
+          conPreposicion = true;
+        }
+        final interrogativo = _es(actual, Categoria.interrogativo)
+            ? _interrogativo(conPreposicion)
+            : null;
         return _Clausula(interrogativo, _nucleo());
       });
 
   /// `<interrogativo> ::= INTERROGATIVO_CANTIDAD [ SUSTANTIVO ] | INTERROGATIVO`
-  _Interrogativo _interrogativo() => _regla('interrogativo', () {
+  _Interrogativo _interrogativo(bool conPreposicion) =>
+      _regla('interrogativo', () {
         final tok = _consumir();
         final entrada = lexico.como(tok.lexema, Categoria.interrogativo)!;
         Nominal? sustantivo;
@@ -344,7 +359,8 @@ class _Parser {
           sustantivo = Nominal(s.concepto!,
               numero: s.numero!, preguntaCantidad: true);
         }
-        return _Interrogativo(entrada, sustantivo, tok);
+        return _Interrogativo(entrada, sustantivo, tok,
+            conPreposicion: conPreposicion);
       });
 
   /// `<nucleo> ::= [ <sn> ] [ NEGACION ] <grupo-verbal>`
@@ -529,6 +545,9 @@ class _Parser {
       final concepto = q.entrada.concepto!;
       final rolDato = q.entrada.rol!;
       final Participante hueco = q.sustantivo ?? Incognita(concepto);
+      // Con "a" delante nunca es el sujeto: "¿a quién escuchan?" pregunta
+      // por el objeto, igual que "vieron a las criaturas" (regla 3).
+      final puedeSerSujeto = !q.conPreposicion && sujetoP == null;
       var alSujeto = false;
       switch (rolDato) {
         case RolInterrogativo.tiempo:
@@ -536,11 +555,11 @@ class _Parser {
           // cuándo / dónde no ocupan ni sujeto ni objeto.
           rol = rolDato;
         case RolInterrogativo.sujeto:
-          alSujeto = sujetoP == null;
+          alSujeto = puedeSerSujeto;
         case RolInterrogativo.objeto:
-          alSujeto = !(transitivo && objetoP == null) && sujetoP == null;
+          alSujeto = !(transitivo && objetoP == null) && puedeSerSujeto;
         case RolInterrogativo.cantidad:
-          alSujeto = !transitivo && sujetoP == null;
+          alSujeto = !transitivo && puedeSerSujeto;
       }
       if (rol == null) {
         final esCantidad = rolDato == RolInterrogativo.cantidad;

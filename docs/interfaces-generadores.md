@@ -1,7 +1,7 @@
 # Interfaz del módulo de generadores
 
-> **Estado: generador de Kethari para oraciones simples (semana 1).**
-> Pendiente: cantidades en base 6, generador de Ozh y validador (semana 2).
+> **Estado: generador de Kethari con cantidades en base 6 (19/11/2026).**
+> Pendiente: generador de Ozh y validador (semana 2).
 
 ## Cómo se usa
 
@@ -21,16 +21,23 @@ r.traza;  // cada decisión, para el modo traza
 
 - `cli/datos/kethari/lexico.json`: palabras por **concepto** del árbol
   (`NAVE` → `kum`) y pronombres por código (`2p` → `ulesh`).
-- `cli/datos/kethari/gramatica.json`: afijos (`-ok`, `-ime`, `nu-`, `-esh`)
-  y la partícula `ka`.
+- `cli/datos/kethari/lexico.json` → `cifras`: `0` → `vo` … `5` → `pai`.
+- `cli/datos/kethari/gramatica.json`: afijos (`-ok`, `-ime`, `nu-`, `-esh`),
+  la partícula `ka` y las reglas de cantidades (`base: 6`, `separador: "-"`).
+
+## Cantidades
+
+`lib/generadores/numeros.dart` escribe una cantidad en cualquier base:
+`escribirNumero(15, reglas, cifra)` → `ra-sel` en Kethari. Ozh usará la misma
+función con `base: 10` (15 → `ois-ulo`).
 
 ## Para la base de datos (integrante 4)
 
 El generador pide las palabras por **concepto** (`VENIR`, `PLANETA`,
 `CUANDO`) y los pronombres por persona y número. Para leerlas de SQLite
 basta una clase que implemente `FuenteKethari` (`pronombre`, `sustantivo`,
-`verbo`, `interrogativo`, `afijos`). Los JSON sirven como datos iniciales.
+`verbo`, `interrogativo`, `cifra`, `afijos`, `numeros`). Los JSON sirven como datos iniciales.
 
 ## Decisiones
 
-Ver `docs/bitacora-generadores.md` (K-01 a K-06).
+Ver `docs/bitacora-generadores.md` (K-01 a K-08).

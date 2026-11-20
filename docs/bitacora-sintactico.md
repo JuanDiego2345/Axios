@@ -67,3 +67,15 @@ Formato: problema, opciones, decisión y prueba que la demuestra
 - **Problema:** "¿Quieren visitar la tierra?" tiene un verbo conjugado y un infinitivo.
 - **Decisión:** por ahora el parser lo rechaza con una explicación ("todavía no se entienden dos verbos"). Se resuelve en la semana 2, de acuerdo con el generador, porque el manual no dice cómo se dice en Kethari ni en Ozh.
 - **Prueba:** `analizador_sintactico_test.dart` → "dos verbos seguidos todavía no se entienden".
+
+### S-12 · 19/11/2026 · Pregunta de sí o no sin ningún signo
+- **Problema:** "ustedes vienen" puede ser una pregunta escrita sin "¿?" o una afirmación. Las dos se escriben igual.
+- **Opciones:** (a) tratar como pregunta toda oración que empiece por el sujeto; (b) tomarla como afirmación y solo marcar pregunta si hay algún signo o una palabra interrogativa.
+- **Decisión:** (b). Sin signos no hay ninguna pista en el texto que distinga las dos lecturas, y (a) convertiría en pregunta cualquier afirmación. Basta con un signo, al principio o al final, para que sea pregunta ("ustedes vienen?"). Las preguntas con qué, quién, cuándo, dónde o cuántos sí se reconocen sin signos.
+- **Prueba:** `analizador_sintactico_test.dart` → "sin ningún signo se lee como afirmación", "sin signos de interrogación solo ? al final", "sin tildes ni signos: cuando llegaran".
+
+### S-13 · 19/11/2026 · Preposición antes del interrogativo
+- **Problema:** "¿A quién escuchan ustedes?" (señal Ozh del día 9) fallaba porque la cláusula no podía empezar por "a". Además, `quién` se tomaba siempre como sujeto.
+- **Opciones:** (a) ignorar la "a"; (b) leerla en `<clausula>` y usarla para saber que el interrogativo es el objeto.
+- **Decisión:** (b). `<clausula> ::= [ PREPOSICION ] <interrogativo> <nucleo> | <nucleo>`. La "a" solo se lee si la sigue un interrogativo, así que la gramática sigue siendo LL(1). Con "a", el interrogativo nunca es el sujeto, igual que en "vieron a las criaturas". Con (a), "¿a quién escuchan?" y "¿quién escucha?" darían el mismo árbol. "de/en dónde" siguen sin traducirse (S-07).
+- **Prueba:** `analizador_sintactico_test.dart` → grupo "preposición antes del interrogativo".

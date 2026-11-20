@@ -92,6 +92,13 @@ class ResultadoCorreccion {
 class Corrector {
   final Set<String> _vocabulario;
 
+  /// Palabras del vocabulario con ñ, indexadas por cómo se escriben en un
+  /// teclado sin ñ: "ano", "anio", "anno", "anyo" -> "año" (decisión L-09).
+  final Map<String, String> _sinEnie = {};
+
+  /// Formas en que se escribe la ñ cuando el teclado no la tiene.
+  static const List<String> _reemplazosEnie = ['n', 'ni', 'nn', 'ny'];
+
   /// [vocabulario]: palabras válidas del español. Se normalizan (minúsculas,
   /// sin tildes) para compararlas con el texto normalizado. Las entradas de
   /// varias palabras ("ir a") se parten en palabras sueltas.
@@ -102,7 +109,18 @@ class Corrector {
             .expand((e) => e.split(' '))
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty)
-            .toSet();
+            .toSet() {
+    for (final palabra in _vocabulario) {
+      if (!palabra.contains('ñ')) continue;
+      for (final r in _reemplazosEnie) {
+        final forma = palabra.replaceAll('ñ', r);
+        // Si la forma sin ñ ya es una palabra válida ("ano"), no se toca.
+        if (!_vocabulario.contains(forma)) {
+          _sinEnie.putIfAbsent(forma, () => palabra);
+        }
+      }
+    }
+  }
 
   /// Cantidad de palabras distintas que conoce el corrector.
   int get tamanoVocabulario => _vocabulario.length;
@@ -121,6 +139,16 @@ class Corrector {
   /// Devuelve null si ninguna está dentro del umbral.
   ({String palabra, int distancia, List<String> empatadas})? mejorCandidato(
       String palabra) {
+    // Primero la ñ ausente: es el error más común y no depende del umbral.
+    final conEnie = _sinEnie[palabra];
+    if (conEnie != null) {
+      return (
+        palabra: conEnie,
+        distancia: distanciaLevenshtein(palabra, conEnie),
+        empatadas: [conEnie],
+      );
+    }
+
     final umbral = umbralPara(palabra.length);
     if (umbral == 0) return null;
 
