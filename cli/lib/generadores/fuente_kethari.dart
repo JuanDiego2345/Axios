@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../sintactico/arbol.dart';
+import 'numeros.dart';
 
 /// Piezas que se pegan a las palabras (manual, sección 3.3).
 class AfijosKethari {
@@ -59,7 +60,13 @@ abstract interface class FuenteKethari {
   /// Palabra interrogativa de un concepto (`CUANDO` -> `kom`).
   String? interrogativo(String concepto);
 
+  /// Palabra de una cifra (`2` -> `ra`). `null` si no existe (6 a 9).
+  String? cifra(int valor);
+
   AfijosKethari get afijos;
+
+  /// Base y separador de las cantidades.
+  ReglasNumero get numeros;
 }
 
 /// Código corto de persona y número: `1s`, `2p`... (mismo formato que
@@ -74,12 +81,16 @@ class FuenteKethariJson implements FuenteKethari {
   final Map<String, String> _sustantivos;
   final Map<String, String> _verbos;
   final Map<String, String> _interrogativos;
+  final Map<String, String> _cifras;
 
   @override
   final AfijosKethari afijos;
 
+  @override
+  final ReglasNumero numeros;
+
   FuenteKethariJson._(this._pronombres, this._sustantivos, this._verbos,
-      this._interrogativos, this.afijos);
+      this._interrogativos, this._cifras, this.afijos, this.numeros);
 
   factory FuenteKethariJson([String carpeta = 'datos/kethari']) {
     final lexico = _leer(carpeta, 'lexico.json');
@@ -88,12 +99,14 @@ class FuenteKethariJson implements FuenteKethari {
     final verbo = _seccion(gramatica, 'verbo');
     final sustantivo = _seccion(gramatica, 'sustantivo');
     final pregunta = _seccion(gramatica, 'pregunta');
+    final numero = _seccion(gramatica, 'numero');
 
     return FuenteKethariJson._(
       _textos(lexico, 'pronombres'),
       _textos(lexico, 'sustantivos'),
       _textos(lexico, 'verbos'),
       _textos(lexico, 'interrogativos'),
+      _textos(lexico, 'cifras'),
       AfijosKethari(
         presente: verbo['presente'] as String? ?? '',
         pasado: _obligatorio(verbo, 'pasado'),
@@ -101,6 +114,10 @@ class FuenteKethariJson implements FuenteKethari {
         negacion: _obligatorio(verbo, 'negacion'),
         plural: _obligatorio(sustantivo, 'plural'),
         pregunta: _obligatorio(pregunta, 'particula'),
+      ),
+      ReglasNumero(
+        base: _entero(numero, 'base'),
+        separador: _obligatorio(numero, 'separador'),
       ),
     );
   }
@@ -127,6 +144,15 @@ class FuenteKethariJson implements FuenteKethari {
     return v;
   }
 
+  static int _entero(Map<String, dynamic> json, String llave) {
+    final v = json[llave];
+    if (v is! int || v < 2) {
+      throw FormatException(
+          'falta "$llave" (entero mayor que 1) en datos/kethari/gramatica.json');
+    }
+    return v;
+  }
+
   @override
   String? pronombre(Persona persona, Numero numero) =>
       _pronombres[codigoRasgos(persona, numero)];
@@ -139,4 +165,7 @@ class FuenteKethariJson implements FuenteKethari {
 
   @override
   String? interrogativo(String concepto) => _interrogativos[concepto];
+
+  @override
+  String? cifra(int valor) => _cifras['$valor'];
 }

@@ -38,6 +38,16 @@
     "VISITAR": "dun"
   },
 
+  "_cifras": "Manual 3.2: Kethari solo tiene cifras del 0 al 5. No hay palabras para 6, 7, 8 ni 9 (nota 3.5); por eso cuenta en base 6 (bitácora K-05).",
+  "cifras": {
+    "0": "vo",
+    "1": "ti",
+    "2": "ra",
+    "3": "sel",
+    "4": "mok",
+    "5": "pai"
+  },
+
   "interrogativos": {
     "QUE": "kel",
     "CUANDO": "kom",
