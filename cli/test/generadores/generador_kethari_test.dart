@@ -83,6 +83,80 @@ void main() {
     });
   });
 
+  group('cantidades (base 6, bitácora K-05)', () {
+    test('día 3: ra-sel kumesh vinok (15 = 2·6 + 3, plural con número)', () {
+      const o = Oracion(
+        modo: Modo.afirmacion,
+        negada: false,
+        tiempo: Tiempo.pasado,
+        verbo: 'VENIR',
+        sujeto: Nominal('NAVE', numero: Numero.plural, cantidad: 15),
+      );
+      expect(kethari(o), 'ra-sel kumesh vinok');
+    });
+
+    test('día 7: anir ti-vo lunesh tepime (6 = 1·6 + 0)', () {
+      const o = Oracion(
+        modo: Modo.afirmacion,
+        negada: false,
+        tiempo: Tiempo.futuro,
+        verbo: 'ESPERAR',
+        sujeto: nosotros,
+        objeto: Nominal('CICLO', numero: Numero.plural, cantidad: 6),
+      );
+      expect(kethari(o), 'anir ti-vo lunesh tepime');
+    });
+
+    test('una sola cifra: ti kum (1, singular)', () {
+      const o = Oracion(
+        modo: Modo.afirmacion,
+        negada: false,
+        tiempo: Tiempo.pasado,
+        verbo: 'VENIR',
+        sujeto: Nominal('NAVE', numero: Numero.singular, cantidad: 1),
+      );
+      expect(kethari(o), 'ti kum vinok');
+    });
+
+    test('9.999, el máximo del enunciado: ti-ti-mok-ti-mok-sel', () {
+      const o = Oracion(
+        modo: Modo.afirmacion,
+        negada: false,
+        tiempo: Tiempo.presente,
+        verbo: 'VER',
+        sujeto: nosotros,
+        objeto: Nominal('ESTRELLA', numero: Numero.plural, cantidad: 9999),
+      );
+      expect(kethari(o), 'anir ti-ti-mok-ti-mok-sel sorinesh kor');
+    });
+
+    test('poseedor antes del número: anir ra kumesh (bitácora K-08)', () {
+      const o = Oracion(
+        modo: Modo.afirmacion,
+        negada: false,
+        tiempo: Tiempo.pasado,
+        verbo: 'VENIR',
+        sujeto: Nominal('NAVE',
+            numero: Numero.plural,
+            cantidad: 2,
+            poseedor: Poseedor(Persona.primera, Numero.plural)),
+      );
+      expect(kethari(o), 'anir ra kumesh vinok');
+    });
+
+    test('la traza muestra las cifras en base 6', () {
+      const o = Oracion(
+        modo: Modo.afirmacion,
+        negada: false,
+        tiempo: Tiempo.pasado,
+        verbo: 'VENIR',
+        sujeto: Nominal('NAVE', numero: Numero.plural, cantidad: 15),
+      );
+      final r = generador.generar(o);
+      expect(r.traza, contains('cantidad de sujeto: 15 -> ra-sel (base 6: 2 3)'));
+    });
+  });
+
   group('reglas del manual', () {
     test('ejemplo del manual: an dahl thal (presente sin sufijo)', () {
       const o = Oracion(
@@ -180,19 +254,6 @@ void main() {
       expect(r.error, contains('BAILAR'));
     });
 
-    test('cantidades todavía no se generan (bitácora K-05)', () {
-      const o = Oracion(
-        modo: Modo.afirmacion,
-        negada: false,
-        tiempo: Tiempo.pasado,
-        verbo: 'VENIR',
-        sujeto: Nominal('NAVE', numero: Numero.plural, cantidad: 15),
-      );
-      final r = generador.generar(o);
-      expect(r.ok, isFalse);
-      expect(r.error, contains('base 6'));
-    });
-
     test('la traza cuenta cada decisión', () {
       const o = Oracion(
         modo: Modo.afirmacion,
@@ -225,6 +286,9 @@ void main() {
       '¿Quién envió el mensaje?': 'sem ombra salok ka',
       '¿Ustedes no vieron nuestro planeta?': 'ulesh anir vael nukorok ka',
       '¿Qué quieren ustedes?': 'kel ulesh thal ka',
+      'Quince naves llegaron': 'ra-sel kumesh vinok',
+      'Nosotros esperaremos seis ciclos': 'anir ti-vo lunesh tepime',
+      '¿Van a llegar quince naves?': 'ra-sel kumesh vinime ka',
     };
     pares.forEach((espanol, esperado) {
       test('"$espanol" -> $esperado', () {
