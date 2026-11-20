@@ -33,6 +33,9 @@ class ResultadoKethari {
 
   const ResultadoKethari._(this.texto, this.error, this.traza);
 
+  const ResultadoKethari.fallo(String error, [List<String> traza = const []])
+      : this._(null, error, traza);
+
   bool get ok => texto != null;
 
   @override
