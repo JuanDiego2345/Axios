@@ -18,31 +18,73 @@ class LexicoRepo {
 
   String _hoy() => DateTime.now().toIso8601String().substring(0, 10);
 
-  // Lee un archivo CSV y separa sus columnas.
-    List<List<String>> _leerCsv(String ruta, {int? columnas}) {
-    final lineas = File(ruta).readAsLinesSync();
+  // Lee un archivo CSV respetando las comillas y las columnas.
+  List<List<String>> _leerCsv(String ruta, {int? columnas}) {
+    final archivo = File(ruta);
 
-    return lineas
-        .skip(1)
-        .where((l) => l.trim().isNotEmpty)
-        .map((l) => columnas == null
-            ? l.split(',').map((c) => c.trim()).toList()
-            : _partir(l, columnas))
-        .toList();
+    if (!archivo.existsSync()) {
+      throw FileSystemException('El archivo no existe', ruta);
+    }
+
+    final lineas = archivo.readAsLinesSync();
+
+    if (lineas.isEmpty) {
+      throw FormatException('El archivo CSV está vacío: $ruta');
+    }
+
+    final filas = <List<String>>[];
+
+    for (final linea in lineas.skip(1)) {
+      if (linea.trim().isEmpty) continue;
+
+      final campos = _partir(linea);
+
+      if (columnas != null && campos.length != columnas) {
+        throw FormatException(
+          'Se esperaban $columnas columnas, '
+          'pero se encontraron ${campos.length}: $linea',
+        );
+      }
+
+      filas.add(campos);
+    }
+
+    return filas;
   }
 
-  // Parte una línea en máximo [max] campos; el último conserva sus comas.
-  List<String> _partir(String linea, int max) {
-    final partes = <String>[];
-    var resto = linea;
-    while (partes.length < max - 1) {
-      final i = resto.indexOf(',');
-      if (i < 0) break;
-      partes.add(resto.substring(0, i).trim());
-      resto = resto.substring(i + 1);
+  // Separa los campos CSV respetando las comillas.
+  List<String> _partir(String linea) {
+    final campos = <String>[];
+    final buffer = StringBuffer();
+    bool entreComillas = false;
+
+    for (int i = 0; i < linea.length; i++) {
+      final caracter = linea[i];
+
+      if (caracter == '"') {
+        if (entreComillas &&
+            i + 1 < linea.length &&
+            linea[i + 1] == '"') {
+          buffer.write('"');
+          i++;
+        } else {
+          entreComillas = !entreComillas;
+        }
+      } else if (caracter == ',' && !entreComillas) {
+        campos.add(buffer.toString().trim());
+        buffer.clear();
+      } else {
+        buffer.write(caracter);
+      }
     }
-    partes.add(resto.trim());
-    return partes;
+
+    if (entreComillas) {
+      throw FormatException('CSV con comillas sin cerrar: $linea');
+    }
+
+    campos.add(buffer.toString().trim());
+
+    return campos;
   }
 
   // Carga el léxico y conserva las versiones anteriores.
@@ -50,11 +92,15 @@ class LexicoRepo {
     final hoy = fecha ?? _hoy();
     final filas = _leerCsv(ruta);
 
+    if (filas.isEmpty) {
+      throw FormatException('El léxico no contiene datos.');
+    }
+
     db.execute('BEGIN');
 
     try {
       for (final f in filas) {
-        if (f.length < 4) {
+        if (f.length != 4 || f[0].isEmpty || f[1].isEmpty) {
           throw FormatException('Fila inválida en el léxico: $f');
         }
 
@@ -74,22 +120,34 @@ class LexicoRepo {
         ).first['id'] as int;
 
         final vigente = db.select(
-          'SELECT kethari, ozh FROM lexico_version '
+          'SELECT id, kethari, ozh, vigente_desde '
+          'FROM lexico_version '
           'WHERE lexico_id = ? AND vigente_hasta IS NULL',
           [id],
         );
 
-        if (vigente.isNotEmpty &&
-            vigente.first['kethari'] == k &&
-            vigente.first['ozh'] == o) {
-          continue;
-        }
+        if (vigente.isNotEmpty) {
+          final actual = vigente.first;
 
-        db.execute(
-          'UPDATE lexico_version SET vigente_hasta = ? '
-          'WHERE lexico_id = ? AND vigente_hasta IS NULL',
-          [hoy, id],
-        );
+          if (actual['kethari'] == k && actual['ozh'] == o) {
+            continue;
+          }
+
+          final fechaActual = actual['vigente_desde'] as String;
+
+          if (hoy.compareTo(fechaActual) < 0) {
+            throw FormatException(
+              'La fecha $hoy no puede ser anterior '
+              'a la versión vigente de "$lema".',
+            );
+          }
+
+          db.execute(
+            'UPDATE lexico_version SET vigente_hasta = ? '
+            'WHERE id = ?',
+            [hoy, actual['id']],
+          );
+        }
 
         db.execute(
           'INSERT INTO lexico_version '
@@ -113,11 +171,15 @@ class LexicoRepo {
     return filas.length;
   }
 
-  // Carga señales y conserva sus versiones anteriores.
-    // Carga señales (dia, voz, transcripcion, salida) sin repetir las que ya están.
+  // Carga señales sin repetir registros existentes.
   int cargarSenales(String ruta, {String? fecha}) {
     final hoy = fecha ?? _hoy();
     final filas = _leerCsv(ruta, columnas: 4);
+
+    if (filas.isEmpty) {
+      throw FormatException('El archivo de señales no contiene datos.');
+    }
+
     var nuevas = 0;
 
     db.execute('BEGIN');
@@ -127,16 +189,18 @@ class LexicoRepo {
         'INSERT INTO carga (archivo, fecha, filas) VALUES (?, ?, ?)',
         [ruta, hoy, filas.length],
       );
+
       final cargaId = db.lastInsertRowId;
 
       for (final f in filas) {
-        if (f.length < 4) {
+        if (f.length != 4 || f[1].isEmpty || f[3].isEmpty) {
           throw FormatException('Fila inválida en las señales: $f');
         }
 
         final dia = int.tryParse(f[0]);
-        if (dia == null) {
-          throw FormatException('Día inválido en las señales: $f');
+
+        if (dia == null || dia < 0) {
+          throw FormatException('Día inválido en las señales: ${f[0]}');
         }
 
         db.execute(
@@ -145,6 +209,7 @@ class LexicoRepo {
           'VALUES (?, ?, ?, ?, ?)',
           [dia, f[1], f[2], f[3], cargaId],
         );
+
         nuevas += db.updatedRows;
       }
 
@@ -157,7 +222,7 @@ class LexicoRepo {
     return nuevas;
   }
 
-  // Busca una palabra y permite consultar su traducción por fecha.
+  // Busca una palabra según su fecha de vigencia.
   Traduccion? buscar(String lema, {String? fecha}) {
     final f = fecha ?? _hoy();
 
@@ -167,6 +232,7 @@ class LexicoRepo {
       'JOIN lexico_version v ON v.lexico_id = l.id '
       'WHERE l.lema_es = ? AND v.vigente_desde <= ? '
       'AND (v.vigente_hasta IS NULL OR v.vigente_hasta > ?) '
+      'ORDER BY v.vigente_desde DESC '
       'LIMIT 1',
       [lema, f, f],
     );
@@ -183,8 +249,7 @@ class LexicoRepo {
     );
   }
 
-  // Devuelve las señales que están vigentes.
-    // Lista las señales registradas, en orden de día.
+  // Lista las señales registradas, ordenadas por día.
   List<Map<String, dynamic>> listarSenales() {
     return db
         .select(
@@ -199,7 +264,8 @@ class LexicoRepo {
             })
         .toList();
   }
-  // Consulta todas las versiones que ha tenido una palabra.
+
+  // Consulta todas las versiones de una palabra.
   List<Map<String, dynamic>> historialPalabra(String lema) {
     final resultados = db.select(
       'SELECT l.lema_es, l.categoria, '
@@ -212,32 +278,36 @@ class LexicoRepo {
       [lema],
     );
 
-    return resultados.map((r) => {
-      'lema_es': r['lema_es'],
-      'categoria': r['categoria'],
-      'kethari': r['kethari'],
-      'ozh': r['ozh'],
-      'vigente_desde': r['vigente_desde'],
-      'vigente_hasta': r['vigente_hasta'],
-      'origen': r['origen'],
-    }).toList();
+    return resultados
+        .map((r) => {
+              'lema_es': r['lema_es'],
+              'categoria': r['categoria'],
+              'kethari': r['kethari'],
+              'ozh': r['ozh'],
+              'vigente_desde': r['vigente_desde'],
+              'vigente_hasta': r['vigente_hasta'],
+              'origen': r['origen'],
+            })
+        .toList();
   }
 
   // Consulta el historial de archivos cargados.
   List<Map<String, dynamic>> historialCargas() {
     final resultados = db.select(
       'SELECT archivo, fecha, filas '
-      'FROM carga '
-      'ORDER BY fecha DESC, id DESC',
+      'FROM carga ORDER BY fecha DESC, id DESC',
     );
 
-    return resultados.map((r) => {
-      'archivo': r['archivo'],
-      'fecha': r['fecha'],
-      'filas': r['filas'],
-    }).toList();
+    return resultados
+        .map((r) => {
+              'archivo': r['archivo'],
+              'fecha': r['fecha'],
+              'filas': r['filas'],
+            })
+        .toList();
   }
-    // Registra una pregunta recibida con su corrección, traducciones y validación.
+
+  // Registra una pregunta, sus correcciones y traducciones.
   int registrarPregunta({
     required String original,
     String? corregido,
@@ -246,6 +316,10 @@ class LexicoRepo {
     String? validacion,
     String? fecha,
   }) {
+    if (original.trim().isEmpty) {
+      throw ArgumentError('La pregunta original no puede estar vacía.');
+    }
+
     db.execute(
       'INSERT INTO pregunta (fecha, texto_original, texto_corregido, '
       'traduccion_kethari, traduccion_ozh, validacion) '
@@ -259,11 +333,11 @@ class LexicoRepo {
         validacion,
       ],
     );
+
     return db.lastInsertRowId;
   }
 
-  // Lista las preguntas, de la más antigua a la más reciente.
-  // Con [desde] (por ejemplo '2026-11-18') solo trae las de esa fecha en adelante.
+  // Lista preguntas, opcionalmente desde una fecha.
   List<Map<String, dynamic>> historialPreguntas({String? desde}) {
     final filas = desde == null
         ? db.select('SELECT * FROM pregunta ORDER BY fecha, id')

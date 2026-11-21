@@ -5,6 +5,12 @@ import 'esquema.dart';
 /// Usa ':memory:' para pruebas o una ruta como 'datos/axios.db'.
 Database abrirBd(String ruta) {
   final db = sqlite3.open(ruta);
-  db.execute(esquemaSql);
-  return db;
+
+  try {
+    db.execute(esquemaSql);
+    return db;
+  } catch (e) {
+    db.dispose();
+    rethrow;
+  }
 }
