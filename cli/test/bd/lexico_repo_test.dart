@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:test/test.dart';
 import '../../lib/bd/conexion.dart';
@@ -53,7 +52,7 @@ void main() {
     db.close();
   });
 
-   test('carga las señales con día y voz y las lista', () {
+  test('carga las señales con día y voz y las lista', () {
     final csv = _csv(
       'sen.csv',
       'dia,voz,transcripcion,salida\n'
@@ -171,6 +170,34 @@ void main() {
 
     expect(historial.length, 1);
     expect(repo.historialCargas().length, 2);
+
+    db.close();
+  });
+
+  test('rechaza una fecha anterior y conserva la version vigente', () {
+    final v1 = _csv(
+      'actual.csv',
+      'lema_es,categoria,kethari,ozh\nagua,sustantivo,ilu,ba\n',
+    );
+
+    final v2 = _csv(
+      'anterior.csv',
+      'lema_es,categoria,kethari,ozh\nagua,sustantivo,antiguo,ba\n',
+    );
+
+    final db = abrirBd(':memory:');
+    final repo = LexicoRepo(db);
+
+    repo.cargarLexico(v1.path, fecha: '2026-11-10');
+
+    expect(
+      () => repo.cargarLexico(v2.path, fecha: '2026-11-05'),
+      throwsA(isA<FormatException>()),
+    );
+
+    expect(repo.buscar('agua', fecha: '2026-11-12')?.kethari, 'ilu');
+    expect(repo.historialPalabra('agua').length, 1);
+    expect(repo.historialCargas().length, 1);
 
     db.close();
   });
