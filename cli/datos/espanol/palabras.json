@@ -1,0 +1,76 @@
+{
+  "_nota": "Vocabulario español que entiende el parser. No es código: se carga al arrancar. Las tildes se quitan al cargar, igual que hace el normalizador. Los conceptos (NAVE, PLANETA...) son la llave para buscar la palabra en Kethari y en Ozh. Mientras se termina la base de datos, este archivo es la fuente; después se importa a SQLite.",
+
+  "_rasgos": "Códigos de persona y número: 1s yo, 2s tú/usted, 3s él/ella, 1p nosotros, 2p ustedes, 3p ellos/ellas.",
+
+  "pronombres": [
+    { "forma": "yo",       "rasgos": "1s", "concuerda": "1s" },
+    { "forma": "tú",       "rasgos": "2s", "concuerda": "2s" },
+    { "forma": "usted",    "rasgos": "2s", "concuerda": "3s" },
+    { "forma": "él",       "rasgos": "3s", "concuerda": "3s" },
+    { "forma": "ella",     "rasgos": "3s", "concuerda": "3s" },
+    { "forma": "nosotros", "rasgos": "1p", "concuerda": "1p" },
+    { "forma": "nosotras", "rasgos": "1p", "concuerda": "1p" },
+    { "forma": "ustedes",  "rasgos": "2p", "concuerda": "3p" },
+    { "forma": "ellos",    "rasgos": "3p", "concuerda": "3p" },
+    { "forma": "ellas",    "rasgos": "3p", "concuerda": "3p" }
+  ],
+
+  "_posesivos": "su/sus se interpretan como 'de ustedes' porque las preguntas van dirigidas a los alienígenas. Ver bitácora S-05.",
+  "posesivos": [
+    { "forma": "mi",       "rasgos": "1s" },
+    { "forma": "mis",      "rasgos": "1s" },
+    { "forma": "tu",       "rasgos": "2s" },
+    { "forma": "tus",      "rasgos": "2s" },
+    { "forma": "su",       "rasgos": "2p" },
+    { "forma": "sus",      "rasgos": "2p" },
+    { "forma": "nuestro",  "rasgos": "1p" },
+    { "forma": "nuestra",  "rasgos": "1p" },
+    { "forma": "nuestros", "rasgos": "1p" },
+    { "forma": "nuestras", "rasgos": "1p" }
+  ],
+
+  "articulos": [
+    { "forma": "el",   "numero": "singular" },
+    { "forma": "la",   "numero": "singular" },
+    { "forma": "los",  "numero": "plural" },
+    { "forma": "las",  "numero": "plural" },
+    { "forma": "un",   "numero": "singular" },
+    { "forma": "una",  "numero": "singular" },
+    { "forma": "unos", "numero": "plural" },
+    { "forma": "unas", "numero": "plural" }
+  ],
+
+  "_sustantivos": "Tomados del léxico del manual v0.7 (sección 3.1). 'ser vivo' queda pendiente porque choca con el verbo ser (bitácora S-08).",
+  "sustantivos": [
+    { "concepto": "PLANETA",  "singular": "planeta",  "plural": "planetas" },
+    { "concepto": "PLANETA",  "singular": "mundo",    "plural": "mundos" },
+    { "concepto": "ESTRELLA", "singular": "estrella", "plural": "estrellas" },
+    { "concepto": "TIERRA",   "singular": "tierra",   "plural": "tierras" },
+    { "concepto": "AGUA",     "singular": "agua",     "plural": "aguas" },
+    { "concepto": "NAVE",     "singular": "nave",     "plural": "naves" },
+    { "concepto": "MENSAJE",  "singular": "mensaje",  "plural": "mensajes" },
+    { "concepto": "PAZ",      "singular": "paz",      "plural": "paces" },
+    { "concepto": "CICLO",    "singular": "ciclo",    "plural": "ciclos" },
+    { "concepto": "ANIO",     "singular": "año",      "plural": "años" },
+    { "concepto": "LUZ",      "singular": "luz",      "plural": "luces" },
+    { "concepto": "CRIATURA", "singular": "criatura", "plural": "criaturas" },
+    { "concepto": "HOGAR",    "singular": "hogar",    "plural": "hogares" }
+  ],
+
+  "_interrogativos": "rol: qué papel cumple la palabra en la oración (sujeto, objeto, tiempo, lugar, cantidad). concuerda: persona del verbo cuando la palabra es el sujeto ('¿quién envió?' pide 3s, así 'envio' se lee como pasado y no como 'yo envío').",
+  "interrogativos": [
+    { "forma": "qué",      "concepto": "QUE",     "rol": "objeto", "concuerda": "3s" },
+    { "forma": "quién",    "concepto": "QUIEN",   "rol": "sujeto", "concuerda": "3s" },
+    { "forma": "quiénes",  "concepto": "QUIEN",   "rol": "sujeto", "concuerda": "3p" },
+    { "forma": "cuándo",   "concepto": "CUANDO",  "rol": "tiempo" },
+    { "forma": "dónde",    "concepto": "DONDE",   "rol": "lugar" },
+    { "forma": "cuántos",  "concepto": "CUANTOS", "rol": "cantidad" },
+    { "forma": "cuántas",  "concepto": "CUANTOS", "rol": "cantidad" }
+  ],
+
+  "negaciones": ["no"],
+
+  "_preposiciones": "Solo 'a': une el futuro con 'ir a' y la 'a' personal ('vieron a las criaturas'). 'de' y 'en' no tienen traducción en el manual (bitácora S-07).",
+  "preposiciones": ["a"]
+}
