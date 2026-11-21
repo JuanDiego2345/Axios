@@ -27,14 +27,18 @@ int distanciaLevenshtein(String a, String b) {
       final borrar = anterior[j] + 1;
       final insertar = actual[j - 1] + 1;
       final sustituir = anterior[j - 1] + costo;
+
       var minimo = borrar < insertar ? borrar : insertar;
       if (sustituir < minimo) minimo = sustituir;
+
       actual[j] = minimo;
     }
+
     final tmp = anterior;
     anterior = actual;
     actual = tmp;
   }
+
   return anterior[b.length];
 }
 
@@ -63,15 +67,16 @@ class Correccion {
   bool get ambigua => empatadas.length > 1;
 
   Map<String, Object?> toMap() => {
-        'original': original,
-        'corregida': corregida,
-        'distancia': distancia,
-        'posicion': posicion,
-        if (ambigua) 'empatadas': empatadas,
-      };
+    'original': original,
+    'corregida': corregida,
+    'distancia': distancia,
+    'posicion': posicion,
+    if (ambigua) 'empatadas': empatadas,
+  };
 
   @override
-  String toString() => '$original -> $corregida (d=$distancia)'
+  String toString() =>
+      '$original -> $corregida (d=$distancia)'
       '${ambigua ? ' empate: $empatadas' : ''}';
 }
 
@@ -102,18 +107,21 @@ class Corrector {
   /// [vocabulario]: palabras válidas del español. Se normalizan (minúsculas,
   /// sin tildes) para compararlas con el texto normalizado. Las entradas de
   /// varias palabras ("ir a") se parten en palabras sueltas.
-  Corrector(Iterable<String> vocabulario,
-      {Normalizador normalizador = const Normalizador()})
-      : _vocabulario = vocabulario
-            .map(normalizador.normalizarPalabra)
-            .expand((e) => e.split(' '))
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toSet() {
+  Corrector(
+    Iterable<String> vocabulario, {
+    Normalizador normalizador = const Normalizador(),
+  }) : _vocabulario = vocabulario
+           .map(normalizador.normalizarPalabra)
+           .expand((e) => e.split(' '))
+           .map((e) => e.trim())
+           .where((e) => e.isNotEmpty)
+           .toSet() {
     for (final palabra in _vocabulario) {
       if (!palabra.contains('ñ')) continue;
+
       for (final r in _reemplazosEnie) {
         final forma = palabra.replaceAll('ñ', r);
+
         // Si la forma sin ñ ya es una palabra válida ("ano"), no se toca.
         if (!_vocabulario.contains(forma)) {
           _sinEnie.putIfAbsent(forma, () => palabra);
@@ -138,9 +146,11 @@ class Corrector {
   /// Busca la palabra del vocabulario más cercana a [palabra].
   /// Devuelve null si ninguna está dentro del umbral.
   ({String palabra, int distancia, List<String> empatadas})? mejorCandidato(
-      String palabra) {
+    String palabra,
+  ) {
     // Primero la ñ ausente: es el error más común y no depende del umbral.
     final conEnie = _sinEnie[palabra];
+
     if (conEnie != null) {
       return (
         palabra: conEnie,
@@ -154,10 +164,13 @@ class Corrector {
 
     var mejor = umbral + 1;
     final empatadas = <String>[];
+
     for (final candidata in _vocabulario) {
       // Si las longitudes difieren más que el umbral, la distancia también.
       if ((candidata.length - palabra.length).abs() > umbral) continue;
+
       final d = distanciaLevenshtein(palabra, candidata);
+
       if (d < mejor) {
         mejor = d;
         empatadas
@@ -167,19 +180,26 @@ class Corrector {
         empatadas.add(candidata);
       }
     }
-    if (empatadas.isEmpty) return null;
+
+    // No permite aceptar candidatos que superen la distancia máxima.
+    if (empatadas.isEmpty || mejor > umbral) return null;
 
     // Desempate (decisión L-05): misma primera letra, luego longitud más
     // parecida, luego orden alfabético para que el resultado sea estable.
     empatadas.sort((x, y) {
       final px = x[0] == palabra[0] ? 0 : 1;
       final py = y[0] == palabra[0] ? 0 : 1;
+
       if (px != py) return px - py;
+
       final lx = (x.length - palabra.length).abs();
       final ly = (y.length - palabra.length).abs();
+
       if (lx != ly) return lx - ly;
+
       return x.compareTo(y);
     });
+
     return (palabra: empatadas.first, distancia: mejor, empatadas: empatadas);
   }
 
@@ -195,21 +215,28 @@ class Corrector {
         salida.add(token);
         continue;
       }
+
       final candidato = mejorCandidato(token.lexema);
+
       if (candidato == null) {
         salida.add(token);
         desconocidas.add(token);
         continue;
       }
+
       salida.add(token.corregido(candidato.palabra));
-      correcciones.add(Correccion(
-        original: token.lexema,
-        corregida: candidato.palabra,
-        distancia: candidato.distancia,
-        posicion: token.posicion,
-        empatadas: candidato.empatadas,
-      ));
+
+      correcciones.add(
+        Correccion(
+          original: token.lexema,
+          corregida: candidato.palabra,
+          distancia: candidato.distancia,
+          posicion: token.posicion,
+          empatadas: candidato.empatadas,
+        ),
+      );
     }
+
     return ResultadoCorreccion(salida, correcciones, desconocidas);
   }
 }

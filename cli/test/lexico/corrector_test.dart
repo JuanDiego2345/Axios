@@ -13,16 +13,25 @@ void main() {
     });
 
     test('es simétrica', () {
-      expect(distanciaLevenshtein('llegaron', 'lelgaron'),
-          distanciaLevenshtein('lelgaron', 'llegaron'));
+      expect(
+        distanciaLevenshtein('llegaron', 'lelgaron'),
+        distanciaLevenshtein('lelgaron', 'llegaron'),
+      );
     });
   });
 
   group('Corrector', () {
     // En el sistema real este vocabulario viene de la base de datos.
     final corrector = Corrector([
-      'Cuándo', 'llegan', 'naves', 'nave', 'planeta', 'quieren', 'paz',
-      'las', 'mensaje',
+      'Cuándo',
+      'llegan',
+      'naves',
+      'nave',
+      'planeta',
+      'quieren',
+      'paz',
+      'las',
+      'mensaje',
     ]);
 
     Token palabra(String lexema, [int posicion = 0]) =>
@@ -30,6 +39,7 @@ void main() {
 
     test('no altera palabras válidas', () {
       final r = corrector.corregir([palabra('naves'), palabra('paz')]);
+
       expect(r.correcciones, isEmpty);
       expect(r.tokens.map((t) => t.lexema), ['naves', 'paz']);
       expect(r.tokens.every((t) => !t.fueCorregido), isTrue);
@@ -37,6 +47,7 @@ void main() {
 
     test('corrige con distancia 1', () {
       final r = corrector.corregir([palabra('nabes', 4)]);
+
       expect(r.tokens.single.lexema, 'naves');
       expect(r.tokens.single.original, 'nabes');
       expect(r.tokens.single.posicion, 4);
@@ -45,43 +56,71 @@ void main() {
 
     test('el vocabulario con tildes se normaliza', () {
       final r = corrector.corregir([palabra('kuando')]);
+
       expect(r.tokens.single.lexema, 'cuando');
     });
 
     test('corrige con distancia 2 en palabras largas', () {
       final r = corrector.corregir([palabra('mesnaje')]);
+
       expect(r.tokens.single.lexema, 'mensaje');
     });
 
     test('palabra sin candidato queda como desconocida', () {
       final r = corrector.corregir([palabra('xyzw')]);
+
       expect(r.tokens.single.lexema, 'xyzw');
       expect(r.desconocidas.single.lexema, 'xyzw');
       expect(r.correcciones, isEmpty);
     });
 
+    test('no acepta candidatos que superan el umbral', () {
+      final c = Corrector(['hable', 'doce']);
+
+      final r = c.corregir([palabra('hombre'), palabra('come')]);
+
+      expect(r.tokens.map((t) => t.lexema), ['hombre', 'come']);
+      expect(r.desconocidas.map((t) => t.lexema), ['hombre', 'come']);
+      expect(r.correcciones, isEmpty);
+    });
+
     test('palabras de 1 o 2 letras no se corrigen (decisión L-04)', () {
       final r = corrector.corregir([palabra('pz')]);
+
       expect(r.tokens.single.lexema, 'pz');
       expect(r.desconocidas, hasLength(1));
     });
 
     test('números y signos no se tocan', () {
       final r = corrector.corregir([
-        const Token(tipo: TipoToken.numero, lexema: '15', posicion: 0, valor: 15),
-        const Token(tipo: TipoToken.cierraInterrogacion, lexema: '?', posicion: 2),
+        const Token(
+          tipo: TipoToken.numero,
+          lexema: '15',
+          posicion: 0,
+          valor: 15,
+        ),
+        const Token(
+          tipo: TipoToken.cierraInterrogacion,
+          lexema: '?',
+          posicion: 2,
+        ),
       ]);
+
       expect(r.correcciones, isEmpty);
       expect(r.desconocidas, isEmpty);
     });
 
     test('desempate: prefiere la misma primera letra (decisión L-05)', () {
       final c = Corrector(['casa', 'masa']);
+
       final r = c.mejorCandidato('cosa');
+
       expect(r!.palabra, 'casa');
       expect(r.empatadas, ['casa']);
+
       final r2 = c.mejorCandidato('xasa');
-      expect(r2!.empatadas, ['casa', 'masa']); // empate real, orden alfabético
+
+      expect(r2!.empatadas, ['casa', 'masa']);
     });
 
     group('ñ ausente (decisión L-09)', () {
@@ -98,6 +137,7 @@ void main() {
       test('gana sobre otro candidato a la misma distancia', () {
         final sinAno = Corrector(['año', 'uno']);
         final r = sinAno.mejorCandidato('ano')!;
+
         expect(r.palabra, 'año');
         expect(r.distancia, 1);
         expect(r.empatadas, ['año']);
@@ -107,12 +147,14 @@ void main() {
         final r = c.corregir([
           const Token(tipo: TipoToken.palabra, lexema: 'ano', posicion: 0),
         ]);
+
         expect(r.correcciones, isEmpty);
         expect(r.tokens.single.lexema, 'ano');
       });
 
       test('vale también para palabras cortas', () {
         final r = Corrector(['ñu']).mejorCandidato('nu');
+
         expect(r!.palabra, 'ñu');
       });
     });
