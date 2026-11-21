@@ -7,6 +7,7 @@ Database abrirBd(String ruta) {
   final db = sqlite3.open(ruta);
 
   try {
+    db.execute('PRAGMA foreign_keys = ON');
     db.execute(esquemaSql);
     return db;
   } catch (e) {
