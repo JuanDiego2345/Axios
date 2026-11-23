@@ -1,0 +1,17 @@
+# senales_semana1.txt · Axios · manual versión 0.7
+# SENAL|dia|voz|transcripcion|salida del decodificador
+SENAL|1|kethari|anir ombraesh salok|Nosotros enviamos mensajes.
+SENAL|1|ozh|ʔoka dra zi ʔenka vesh|Antes enviamos un mensaje. [zi]
+SENAL|2|kethari|anul parn thal|Nosotros queremos paz.
+SENAL|2|ozh|lom tho oruvi ilu|Ellos quieren paz. [tho]
+SENAL|3|kethari|ra-sel kumesh vinok|Quince naves llegaron.
+SENAL|3|ozh|venu sur tho ois-ulo gor|Llegarán quince naves. [tho]
+SENAL|4|kethari|anir ulesh nukorok|Nosotros no los vimos a ustedes.
+SENAL|4|ozh|ne ʔim zi ʔenka gor|No vimos ninguna nave. [zi]
+SENAL|5|kethari|kom ulesh vinime ka|¿Cuándo vendrán ustedes?
+SENAL|5|ozh|ʔasur mar shavi wem|¿Cuándo vienen ustedes? [mar]
+SENAL|6|kethari|sem ombra salok ka|¿Quién envió el mensaje?
+SENAL|6|ozh|ne tal mar shavi|Ustedes no hablan. [mar]
+SENAL|6|desconocida||Ya los escuchamos.
+SENAL|7|kethari|anul ti-vo lunesh tepime|Nosotros esperaremos seis ciclos.
+SENAL|7|ozh|bo mar ʔen sab drüm|Yo espero seis ciclos. [mar]

@@ -1,0 +1,10 @@
+# senales_semana2.txt · Axios · manual versión 0.8
+# SENAL|dia|voz|transcripcion|salida del decodificador
+# CORRECCION|lengua|palabra|significado anterior|significado nuevo
+SENAL|8|kethari|iresh tekaesh nuthal|Ellos no quieren territorios reclamados.
+SENAL|8|ozh|ʔoka kesh zi oruvi thüm ʔenka|Antes ellos visitaron nuestro mundo. [zi]
+SENAL|9|kethari|ir yorr mi ka|¿Es él una criatura?
+SENAL|9|ozh|ʔanem tho shavi wis|¿A quién escuchan ustedes? [tho]
+SENAL|10|kethari|anir mok-ra sorinesh korok|Nosotros vimos veintiséis estrellas.
+SENAL|10|ozh|ne lom tho oruvi ilu|Ellos no quieren paz. [tho]
+CORRECCION|kethari|teka|tierra|territorio reclamado
