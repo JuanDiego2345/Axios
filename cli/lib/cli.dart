@@ -164,10 +164,21 @@ class AxiosCli {
   /// 2. Orden obligatoria: `cargar <archivo>`
   ///
   /// Carga archivos CSV de léxico o señales en la base de datos con versionamiento.
+  /// También acepta el formato oficial de Axios (SENAL|... y CORRECCION|...).
   ResultadoCargar cargar(String rutaArchivo) {
     final archivo = File(rutaArchivo);
     if (!archivo.existsSync()) {
       throw FileSystemException('No se encontró el archivo a cargar', rutaArchivo);
+    }
+
+    // Formato oficial de Axios: SENAL|... y CORRECCION|...
+    if (lexicoRepo.esFormatoAxios(rutaArchivo)) {
+      final r = lexicoRepo.cargarAxios(rutaArchivo);
+      return ResultadoCargar(
+        archivo: rutaArchivo,
+        tipo: 'señales y correcciones del manual',
+        filas: r.filas,
+      );
     }
 
     final lineas = archivo.readAsLinesSync().where((l) => l.trim().isNotEmpty).toList();
