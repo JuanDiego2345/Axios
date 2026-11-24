@@ -230,6 +230,154 @@ void main() {
     });
   });
 
+  group('pronombres pegados al verbo (bitácora S-14)', () {
+    test('"Nosotros no los vimos a ustedes" (señal del día 4)', () {
+      final o = arbol('Nosotros no los vimos a ustedes.');
+      expect(o.sujeto, const Pronominal(Persona.primera, Numero.plural));
+      expect(o.objeto, ustedes);
+      expect(o.negada, isTrue);
+      expect(o.tiempo, Tiempo.pasado);
+      expect(o.verbo, 'VER');
+    });
+
+    test('"¿Nos escuchan?": nos es el objeto y el sujeto se deduce', () {
+      final o = arbol('¿Nos escuchan?');
+      expect(o.objeto, const Pronominal(Persona.primera, Numero.plural));
+      expect(o.sujeto, ustedesInferido);
+    });
+
+    test('"¿Quién los escucha?": quién sujeto y los objeto', () {
+      final o = arbol('¿Quién los escucha?');
+      expect(o.sujeto, isA<Incognita>());
+      expect(o.objeto, const Pronominal(Persona.tercera, Numero.plural));
+    });
+
+    test('"los" sin verbo después sigue siendo artículo', () {
+      final o = arbol('Los mensajes llegaron');
+      expect((o.sujeto as Nominal).concepto, 'MENSAJE');
+    });
+
+    test('"a" + pronombre es objeto, no sujeto', () {
+      final o = arbol('¿Vieron a ustedes?');
+      expect(o.objeto, ustedes);
+      expect(o.sujeto, ustedesInferido);
+    });
+
+    test('si ya hay otro objeto, el pronombre no tiene lugar', () {
+      final r = analizar('¿Qué nos envían?');
+      expect(r.arbol, isNull);
+      expect(r.error!.mensaje, contains('"nos"'));
+    });
+  });
+
+  group('adverbios de tiempo (bitácora S-15)', () {
+    test('"Antes enviamos un mensaje": antes elige el pasado', () {
+      final o = arbol('Antes enviamos un mensaje.');
+      expect(o.tiempo, Tiempo.pasado);
+      expect(o.sujeto, nosotrosInferido);
+      expect((o.objeto as Nominal).concepto, 'MENSAJE');
+    });
+
+    test('sin "antes", "enviamos" queda en presente', () {
+      expect(arbol('Enviamos un mensaje').tiempo, Tiempo.presente);
+    });
+
+    test('"Antes ellos visitaron nuestro mundo" (señal del día 8)', () {
+      final o = arbol('Antes ellos visitaron nuestro mundo.');
+      expect(o.tiempo, Tiempo.pasado);
+      expect(o.verbo, 'VISITAR');
+      expect(o.sujeto, const Pronominal(Persona.tercera, Numero.plural));
+      expect((o.objeto as Nominal).poseedor?.persona, Persona.primera);
+    });
+
+    test('"Ya los escuchamos": ya elige el pasado y se avisa', () {
+      final r = analizar('Ya los escuchamos.');
+      final o = r.arbol!;
+      expect(o.tiempo, Tiempo.pasado);
+      expect(o.objeto, const Pronominal(Persona.tercera, Numero.plural));
+      expect(r.advertencias.any((a) => a.contains('"ya"')), isTrue);
+    });
+
+    test('"después" y adverbio al final', () {
+      expect(arbol('Después vendrán ustedes').tiempo, Tiempo.futuro);
+      expect(arbol('Llegamos antes').tiempo, Tiempo.pasado);
+    });
+  });
+
+  group('ningún / ninguna (bitácora S-16)', () {
+    test('"No vimos ninguna nave" (señal del día 4)', () {
+      final o = arbol('No vimos ninguna nave.');
+      expect(o.negada, isTrue);
+      final nave = o.objeto as Nominal;
+      expect(nave.concepto, 'NAVE');
+      expect(nave.cantidad, isNull);
+    });
+
+    test('sin "no", ninguna hace negativa la oración', () {
+      final o = arbol('Ninguna nave llegó');
+      expect(o.negada, isTrue);
+      expect(o.tiempo, Tiempo.pasado);
+      expect((o.sujeto as Nominal).concepto, 'NAVE');
+    });
+  });
+
+  group('sustantivos de varias palabras (bitácora S-17)', () {
+    test('"Ellos no quieren territorios reclamados" (señal del día 8)', () {
+      final o = arbol('Ellos no quieren territorios reclamados.');
+      final t = o.objeto as Nominal;
+      expect(t.concepto, 'TERRITORIO_RECLAMADO');
+      expect(t.numero, Numero.plural);
+      expect(o.negada, isTrue);
+    });
+
+    test('con artículo y en singular', () {
+      final o = arbol('¿Quieren el territorio reclamado?');
+      expect((o.objeto as Nominal).concepto, 'TERRITORIO_RECLAMADO');
+    });
+
+    test('"¿Es él un ser vivo?": ser vivo es CRIATURA (S-08 resuelta)', () {
+      final o = arbol('¿Es él un ser vivo?');
+      expect(o.verbo, 'SER');
+      expect((o.objeto as Nominal).concepto, 'CRIATURA');
+    });
+
+    test('con cuántos', () {
+      final o = arbol('¿Cuántos territorios reclamados quieren?');
+      expect(o.rolInterrogativo, RolInterrogativo.cantidad);
+      expect((o.objeto as Nominal).concepto, 'TERRITORIO_RECLAMADO');
+    });
+  });
+
+  group('frases del decodificador (semanas 1 y 2)', () {
+    // Salidas en español de senales_semana1.txt y senales_semana2.txt.
+    const frases = [
+      'Nosotros enviamos mensajes.',
+      'Antes enviamos un mensaje.',
+      'Nosotros queremos paz.',
+      'Ellos quieren paz.',
+      'Quince naves llegaron.',
+      'Llegarán quince naves.',
+      'Nosotros no los vimos a ustedes.',
+      'No vimos ninguna nave.',
+      '¿Cuándo vendrán ustedes?',
+      '¿Cuándo vienen ustedes?',
+      '¿Quién envió el mensaje?',
+      'Ustedes no hablan.',
+      'Ya los escuchamos.',
+      'Nosotros esperaremos seis ciclos.',
+      'Yo espero seis ciclos.',
+      'Ellos no quieren territorios reclamados.',
+      'Antes ellos visitaron nuestro mundo.',
+      '¿Es él una criatura?',
+      '¿A quién escuchan ustedes?',
+      'Nosotros vimos veintiséis estrellas.',
+      'Ellos no quieren paz.',
+    ];
+    for (final f in frases) {
+      test(f, () => arbol(f));
+    }
+  });
+
   group('errores con explicación (nunca se cae)', () {
     test('palabra fuera del vocabulario', () {
       final r = analizar('¿Cuándo llega el presidente?');

@@ -111,6 +111,9 @@ class _SN {
 
   /// Va después de la preposición "a" ("vieron a las criaturas").
   final bool conPreposicion;
+
+  /// Lleva "ningún/ninguna" ("ninguna nave"): la oración queda negativa.
+  final bool negativo;
   final Token token;
 
   const _SN({
@@ -120,6 +123,7 @@ class _SN {
     required this.antesDelVerbo,
     required this.conPreposicion,
     required this.token,
+    this.negativo = false,
   });
 }
 
@@ -159,7 +163,31 @@ class _Nucleo {
   final _GrupoVerbal verbo;
   final List<_SN> despues;
 
-  const _Nucleo(this.antes, this.negada, this.verbo, this.despues);
+  /// Pronombre pegado antes del verbo ("no LOS vimos"). null si no hay.
+  final EntradaLexica? clitico;
+  final Token? tokenClitico;
+
+  /// Adverbios de tiempo leídos ("antes", "ya").
+  final List<EntradaLexica> adverbios;
+
+  const _Nucleo(
+    this.antes,
+    this.negada,
+    this.verbo,
+    this.despues, {
+    this.clitico,
+    this.tokenClitico,
+    this.adverbios = const [],
+  });
+
+  /// Tiempo que piden los adverbios, el último que lo indique.
+  Tiempo? get tiempoPreferido {
+    Tiempo? t;
+    for (final a in adverbios) {
+      t = a.tiempo ?? t;
+    }
+    return t;
+  }
 }
 
 class _Clausula {
@@ -245,20 +273,53 @@ class _Parser {
   bool _esInfinitivo(Token tok) =>
       _esPalabra(tok) && morf.esInfinitivo(tok.lexema);
 
-  /// Primeros de `<sn>`: PRONOMBRE | ARTICULO | POSESIVO | NUMERO | SUSTANTIVO.
-  bool _empiezaSN(Token tok) =>
-      tok.tipo == TipoToken.numero ||
-      _es(tok, Categoria.pronombre) ||
-      _es(tok, Categoria.articulo) ||
-      _es(tok, Categoria.posesivo) ||
-      _es(tok, Categoria.sustantivo);
+  /// SUSTANTIVO que empieza [k] tokens más adelante: una palabra ("nave") o
+  /// varias ("territorios reclamados"). Gana la forma más larga. Devuelve
+  /// la entrada y cuántos tokens ocupa, o null si ahí no hay sustantivo.
+  ({EntradaLexica entrada, int largo})? _sustantivoEn(int k) {
+    if (!_esPalabra(_mirar(k))) return null;
+    final palabras = <String>[];
+    for (var j = i + k; j < t.length && _esPalabra(t[j]); j++) {
+      palabras.add(t[j].lexema);
+    }
+    final compuesto = lexico.compuesto(palabras);
+    if (compuesto != null) return compuesto;
+    final simple = lexico.como(_mirar(k).lexema, Categoria.sustantivo);
+    return simple == null ? null : (entrada: simple, largo: 1);
+  }
+
+  /// Lee el SUSTANTIVO que empieza en el token actual (ya comprobado con
+  /// [_sustantivoEn]).
+  EntradaLexica _leerSustantivo() {
+    final s = _sustantivoEn(0)!;
+    for (var k = 0; k < s.largo; k++) {
+      _consumir();
+    }
+    return s.entrada;
+  }
+
+  /// Primeros de `<sn>`: PRONOMBRE | ARTICULO | POSESIVO | NEGATIVO | NUMERO
+  /// | SUSTANTIVO, mirando [k] tokens más adelante.
+  bool _empiezaSN([int k = 0]) {
+    final tok = _mirar(k);
+    return tok.tipo == TipoToken.numero ||
+        _es(tok, Categoria.pronombre) ||
+        _es(tok, Categoria.articulo) ||
+        _es(tok, Categoria.posesivo) ||
+        _es(tok, Categoria.negativo) ||
+        _sustantivoEn(k) != null;
+  }
 
   /// "el"/"tu" se leen como determinante si los sigue un sustantivo o un
   /// número ("tu planeta"); si no, como pronombre ("tú vienes").
   bool _esDeterminanteAqui() =>
       (_es(actual, Categoria.articulo) || _es(actual, Categoria.posesivo)) &&
-      (_es(_mirar(1), Categoria.sustantivo) ||
-          _mirar(1).tipo == TipoToken.numero);
+      (_sustantivoEn(1) != null || _mirar(1).tipo == TipoToken.numero);
+
+  /// "los", "nos", "te"... se leen como CLITICO solo si los sigue un verbo
+  /// conjugado ("no los vimos"); si no, "los" es artículo ("los mensajes").
+  bool _esCliticoAqui() =>
+      _es(actual, Categoria.clitico) && _esConjugado(_mirar(1));
 
   void _advertir(String texto) {
     advertencias.add(texto);
@@ -354,8 +415,8 @@ class _Parser {
         final entrada = lexico.como(tok.lexema, Categoria.interrogativo)!;
         Nominal? sustantivo;
         if (entrada.rol == RolInterrogativo.cantidad &&
-            _es(actual, Categoria.sustantivo)) {
-          final s = lexico.como(_consumir().lexema, Categoria.sustantivo)!;
+            _sustantivoEn(0) != null) {
+          final s = _leerSustantivo();
           sustantivo = Nominal(s.concepto!,
               numero: s.numero!, preguntaCantidad: true);
         }
@@ -363,24 +424,46 @@ class _Parser {
             conPreposicion: conPreposicion);
       });
 
-  /// `<nucleo> ::= [ <sn> ] [ NEGACION ] <grupo-verbal>`
-  /// `             [ <complemento> [ <complemento> ] ]`
+  /// `<nucleo> ::= [ ADVERBIO ] [ <sn> ] [ ADVERBIO ] [ NEGACION ] [ CLITICO ]`
+  /// `             <grupo-verbal> [ <complemento> [ <complemento> ] ]`
+  /// `             [ ADVERBIO ]`
   _Nucleo _nucleo() => _regla('nucleo', () {
-        final antes = _empiezaSN(actual) ? _sn(antesDelVerbo: true) : null;
+        final adverbios = <EntradaLexica>[];
+        void adverbio() {
+          if (_es(actual, Categoria.adverbio)) {
+            adverbios.add(
+                lexico.como(_consumir().lexema, Categoria.adverbio)!);
+          }
+        }
+
+        adverbio();
+        final antes = !_esCliticoAqui() && _empiezaSN()
+            ? _sn(antesDelVerbo: true)
+            : null;
+        adverbio();
         var negada = false;
         if (_es(actual, Categoria.negacion)) {
           _consumir();
           negada = true;
         }
+        EntradaLexica? clitico;
+        Token? tokenClitico;
+        if (_esCliticoAqui()) {
+          tokenClitico = _consumir();
+          clitico = lexico.como(tokenClitico.lexema, Categoria.clitico);
+        }
         final verbo = _grupoVerbal();
         final despues = <_SN>[];
         while (despues.length < 2 &&
-            (_empiezaSN(actual) ||
-                (_es(actual, Categoria.preposicion) &&
-                    _empiezaSN(_mirar(1))))) {
+            (_empiezaSN() ||
+                (_es(actual, Categoria.preposicion) && _empiezaSN(1)))) {
           despues.add(_complemento());
         }
-        return _Nucleo(antes, negada, verbo, despues);
+        adverbio();
+        return _Nucleo(antes, negada, verbo, despues,
+            clitico: clitico,
+            tokenClitico: tokenClitico,
+            adverbios: adverbios);
       });
 
   /// `<complemento> ::= [ PREPOSICION ] <sn>`
@@ -431,7 +514,7 @@ class _Parser {
       });
 
   /// `<sn> ::= PRONOMBRE | [ <determinante> ] [ NUMERO ] SUSTANTIVO`
-  /// `<determinante> ::= ARTICULO | POSESIVO`
+  /// `<determinante> ::= ARTICULO | POSESIVO | NEGATIVO`
   _SN _sn({required bool antesDelVerbo, bool conPreposicion = false}) =>
       _regla('sn', () {
         final inicio = actual;
@@ -449,7 +532,11 @@ class _Parser {
         }
 
         Poseedor? poseedor;
-        if (_es(actual, Categoria.articulo) ||
+        var negativo = false;
+        if (_es(actual, Categoria.negativo)) {
+          _consumir();
+          negativo = true;
+        } else if (_es(actual, Categoria.articulo) ||
             _es(actual, Categoria.posesivo)) {
           final det = _consumir();
           final pos = lexico.como(det.lexema, Categoria.posesivo);
@@ -459,10 +546,10 @@ class _Parser {
         int? cantidad;
         if (actual.tipo == TipoToken.numero) cantidad = _consumir().valor;
 
-        if (!_es(actual, Categoria.sustantivo)) {
+        if (_sustantivoEn(0) == null) {
           throw _esperado('un sustantivo', actual);
         }
-        final s = lexico.como(_consumir().lexema, Categoria.sustantivo)!;
+        final s = _leerSustantivo();
 
         var numero = s.numero!;
         if (cantidad != null) {
@@ -480,6 +567,7 @@ class _Parser {
           esPronombre: false,
           antesDelVerbo: antesDelVerbo,
           conPreposicion: conPreposicion,
+          negativo: negativo,
           token: inicio,
         );
       });
@@ -512,10 +600,11 @@ class _Parser {
     _SN? objeto;
     void ubicar(_SN sn) {
       final bool vaDeSujeto;
-      if (sn.esPronombre) {
-        vaDeSujeto = sujeto == null;
-      } else if (sn.conPreposicion) {
+      if (sn.conPreposicion) {
+        // "vieron a las criaturas", "no los vimos a ustedes".
         vaDeSujeto = false;
+      } else if (sn.esPronombre) {
+        vaDeSujeto = sujeto == null;
       } else if (sn.antesDelVerbo) {
         vaDeSujeto = sujeto == null;
       } else {
@@ -537,7 +626,16 @@ class _Parser {
 
     Participante? sujetoP = sujeto?.participante;
     Participante? objetoP = objeto?.participante;
+    final objetoEscrito = objeto != null;
     var concordancia = sujeto?.concordancia;
+
+    // "ningún/ninguna" hace negativa la oración aunque no haya "no".
+    var negada = n.negada;
+    final grupos = [if (n.antes != null) n.antes!, ...n.despues];
+    if (!negada && grupos.any((g) => g.negativo)) {
+      negada = true;
+      _log('"ningún/ninguna" sin "no": la oración queda negativa');
+    }
 
     // 5. La palabra interrogativa ocupa su hueco.
     RolInterrogativo? rol;
@@ -583,14 +681,49 @@ class _Parser {
       _log('interrogativo $concepto -> $rol');
     }
 
-    // 7. Elegir el análisis del verbo que concuerda con el sujeto.
+    // 8. Pronombre pegado al verbo ("no LOS vimos"): es el objeto.
+    final clitico = n.clitico;
+    if (clitico != null) {
+      final pronombre = Pronominal(clitico.persona!, clitico.numero!);
+      if (objetoP == null) {
+        objetoP = pronombre;
+        _log('clítico "${clitico.forma}" -> objeto ${pronombre.describir()}');
+      } else if (objetoEscrito) {
+        // "no los vimos a ustedes": manda el objeto escrito con "a".
+        _log('clítico "${clitico.forma}" repite el objeto escrito');
+      } else {
+        throw ErrorSintactico(
+            'el pronombre "${clitico.forma}" no tiene lugar: la oración ya '
+            'tiene objeto y el manual no muestra cómo decir otro',
+            n.tokenClitico!.columna);
+      }
+    }
+
+    // 7. Elegir el análisis del verbo que concuerda con el sujeto. Si hay
+    // un adverbio de tiempo ("antes"), van primero los de ese tiempo.
+    final preferido = n.tiempoPreferido;
+    List<AnalisisVerbal> preferir(List<AnalisisVerbal> lista) {
+      if (preferido == null) return lista;
+      return [
+        ...lista.where((a) => a.tiempo == preferido),
+        ...lista.where((a) => a.tiempo != preferido),
+      ];
+    }
+
+    for (final a in n.adverbios) {
+      if (!a.traduce) {
+        _advertir('"${a.forma}" no tiene palabra en el manual; solo se usó '
+            'para elegir el tiempo del verbo');
+      }
+    }
+
     final AnalisisVerbal elegido;
     if (concordancia != null) {
       final conc = concordancia;
       final coinciden =
-          candidatos.where((a) => a.personaVerbo == conc).toList();
+          preferir(candidatos.where((a) => a.personaVerbo == conc).toList());
       if (coinciden.isEmpty) {
-        elegido = candidatos.first;
+        elegido = preferir(candidatos).first;
         _advertir('"${n.verbo.token.lexema}" no concuerda con el sujeto '
             '(se esperaba $conc); se mantiene el sujeto escrito');
       } else {
@@ -598,8 +731,9 @@ class _Parser {
         _avisarAmbiguedad(n.verbo.token.lexema, coinciden, elegido);
       }
     } else {
-      elegido = candidatos.first;
-      _avisarAmbiguedad(n.verbo.token.lexema, candidatos, elegido);
+      final ordenados = preferir(candidatos);
+      elegido = ordenados.first;
+      _avisarAmbiguedad(n.verbo.token.lexema, ordenados, elegido);
     }
 
     // 6. Sujeto omitido: se deduce de la persona del verbo.
@@ -625,7 +759,7 @@ class _Parser {
       modo: modo,
       interrogativo: q?.entrada.concepto,
       rolInterrogativo: rol,
-      negada: n.negada,
+      negada: negada,
       tiempo: tiempo,
       verbo: concepto,
       sujeto: sujetoFinal,
