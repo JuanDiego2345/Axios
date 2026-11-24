@@ -41,7 +41,7 @@
     { "forma": "unas", "numero": "plural" }
   ],
 
-  "_sustantivos": "Tomados del léxico del manual v0.7 (sección 3.1). 'ser vivo' queda pendiente porque choca con el verbo ser (bitácora S-08).",
+  "_sustantivos": "Tomados del léxico del manual v0.7 (sección 3.1) y de la corrección de la semana 2 (manual v0.8: teka = territorio reclamado). Pueden tener varias palabras ('ser vivo'); el parser busca primero la más larga (bitácora S-17).",
   "sustantivos": [
     { "concepto": "PLANETA",  "singular": "planeta",  "plural": "planetas" },
     { "concepto": "PLANETA",  "singular": "mundo",    "plural": "mundos" },
@@ -55,7 +55,16 @@
     { "concepto": "ANIO",     "singular": "año",      "plural": "años" },
     { "concepto": "LUZ",      "singular": "luz",      "plural": "luces" },
     { "concepto": "CRIATURA", "singular": "criatura", "plural": "criaturas" },
-    { "concepto": "HOGAR",    "singular": "hogar",    "plural": "hogares" }
+    { "concepto": "HOGAR",    "singular": "hogar",    "plural": "hogares" },
+    { "concepto": "CRIATURA", "singular": "ser vivo", "plural": "seres vivos" },
+    { "concepto": "TERRITORIO_RECLAMADO", "singular": "territorio reclamado", "plural": "territorios reclamados" }
+  ],
+
+  "_negativos": "Determinantes negativos: 'No vimos ninguna nave'. Hacen negativa la oración aunque no haya 'no' ('Ninguna nave llegó'). El sustantivo va sin cantidad, como en la señal Ozh del día 4 (bitácora S-16).",
+  "negativos": [
+    { "forma": "ningún",  "numero": "singular" },
+    { "forma": "ninguno", "numero": "singular" },
+    { "forma": "ninguna", "numero": "singular" }
   ],
 
   "_interrogativos": "rol: qué papel cumple la palabra en la oración (sujeto, objeto, tiempo, lugar, cantidad). concuerda: persona del verbo cuando la palabra es el sujeto ('¿quién envió?' pide 3s, así 'envio' se lee como pasado y no como 'yo envío').",
@@ -70,6 +79,26 @@
   ],
 
   "negaciones": ["no"],
+
+  "_cliticos": "Pronombres que van pegados antes del verbo ('no los vimos', 'nos escuchan'). Solo se leen así si los sigue un verbo; si no, 'los', 'las' y 'la' son artículos. Si la oración repite el objeto con 'a' ('no los vimos a ustedes'), manda el que va con 'a' (bitácora S-14).",
+  "cliticos": [
+    { "forma": "me",  "rasgos": "1s" },
+    { "forma": "te",  "rasgos": "2s" },
+    { "forma": "lo",  "rasgos": "3s" },
+    { "forma": "la",  "rasgos": "3s" },
+    { "forma": "le",  "rasgos": "3s" },
+    { "forma": "nos", "rasgos": "1p" },
+    { "forma": "los", "rasgos": "3p" },
+    { "forma": "las", "rasgos": "3p" },
+    { "forma": "les", "rasgos": "3p" }
+  ],
+
+  "_adverbios": "Adverbios de tiempo. 'prefiere' es el tiempo que se elige cuando el verbo es ambiguo ('Antes enviamos' -> pasado, aunque 'enviamos' también es presente). 'antes' y 'después' equivalen a los marcadores de Ozh ʔoka y venu. 'ya' no tiene palabra en el manual: solo ayuda a elegir el tiempo y se avisa (bitácora S-15).",
+  "adverbios": [
+    { "forma": "antes",   "prefiere": "pasado", "traduce": true },
+    { "forma": "después", "prefiere": "futuro", "traduce": true },
+    { "forma": "ya",      "prefiere": "pasado", "traduce": false }
+  ],
 
   "_preposiciones": "Solo 'a': une el futuro con 'ir a' y la 'a' personal ('vieron a las criaturas'). 'de' y 'en' no tienen traducción en el manual (bitácora S-07).",
   "preposiciones": ["a"]

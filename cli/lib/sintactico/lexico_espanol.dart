@@ -22,6 +22,15 @@ enum Categoria {
   interrogativo,
   negacion,
   preposicion,
+
+  /// Pronombre pegado antes del verbo: "no LOS vimos", "NOS escuchan".
+  clitico,
+
+  /// Adverbio de tiempo: antes, después, ya.
+  adverbio,
+
+  /// Determinante negativo: ningún, ninguna.
+  negativo,
 }
 
 /// Persona y número a partir de los códigos de los datos ("2p" -> ustedes).
@@ -63,7 +72,7 @@ class EntradaLexica {
   /// Concepto para sustantivos e interrogativos (`NAVE`, `CUANDO`).
   final String? concepto;
 
-  /// Persona del significado: pronombres y posesivos.
+  /// Persona del significado: pronombres, posesivos y clíticos.
   final Persona? persona;
 
   /// Número: pronombres, posesivos, artículos y sustantivos.
@@ -77,6 +86,12 @@ class EntradaLexica {
   /// Papel de un interrogativo.
   final RolInterrogativo? rol;
 
+  /// Adverbios: tiempo que se prefiere cuando el verbo es ambiguo.
+  final Tiempo? tiempo;
+
+  /// Adverbios: false si el manual no tiene cómo decirlo ("ya").
+  final bool traduce;
+
   const EntradaLexica({
     required this.forma,
     required this.categoria,
@@ -85,6 +100,8 @@ class EntradaLexica {
     this.numero,
     this.concordancia,
     this.rol,
+    this.tiempo,
+    this.traduce = true,
   });
 
   @override
@@ -260,6 +277,31 @@ class FuenteLexicoJson implements FuenteLexicoEspanol {
         in (json['preposiciones'] as List? ?? const []).cast<String>()) {
       salida.add(EntradaLexica(forma: _n(p), categoria: Categoria.preposicion));
     }
+    for (final c in _lista(json, 'cliticos')) {
+      final r = rasgosDesdeCodigo(c['rasgos'] as String);
+      salida.add(EntradaLexica(
+        forma: _n(c['forma'] as String),
+        categoria: Categoria.clitico,
+        persona: r.persona,
+        numero: r.numero,
+      ));
+    }
+    for (final a in _lista(json, 'adverbios')) {
+      final prefiere = a['prefiere'] as String?;
+      salida.add(EntradaLexica(
+        forma: _n(a['forma'] as String),
+        categoria: Categoria.adverbio,
+        tiempo: prefiere == null ? null : Tiempo.values.byName(prefiere),
+        traduce: a['traduce'] as bool? ?? true,
+      ));
+    }
+    for (final d in _lista(json, 'negativos')) {
+      salida.add(EntradaLexica(
+        forma: _n(d['forma'] as String),
+        categoria: Categoria.negativo,
+        numero: _numeroDesdeTexto(d['numero'] as String),
+      ));
+    }
     return salida;
   }
 
@@ -325,13 +367,47 @@ class FuenteLexicoJson implements FuenteLexicoEspanol {
 ///
 /// Una forma puede tener varias: "el" es artículo y pronombre (él), "tu" es
 /// posesivo y pronombre (tú). El parser decide cuál por el contexto.
+///
+/// Las formas de varias palabras ("territorio reclamado", "ser vivo") se
+/// guardan aparte, por su primera palabra, y se buscan con [compuesto].
 class LexicoEspanol {
   final Map<String, List<EntradaLexica>> _porForma = {};
+  final Map<String, List<EntradaLexica>> _compuestos = {};
+  final Set<String> _partes = {};
 
   LexicoEspanol(Iterable<EntradaLexica> entradas) {
     for (final e in entradas) {
-      _porForma.putIfAbsent(e.forma, () => []).add(e);
+      final palabras = e.forma.split(' ');
+      if (palabras.length > 1) {
+        _compuestos.putIfAbsent(palabras.first, () => []).add(e);
+        _partes.addAll(palabras);
+      } else {
+        _porForma.putIfAbsent(e.forma, () => []).add(e);
+      }
     }
+  }
+
+  /// La forma de varias palabras más larga con la que empiezan [palabras]
+  /// ("territorios reclamados llegaron" -> "territorios reclamados", 2), o
+  /// null si no empiezan con ninguna.
+  ({EntradaLexica entrada, int largo})? compuesto(List<String> palabras) {
+    if (palabras.isEmpty) return null;
+    ({EntradaLexica entrada, int largo})? mejor;
+    for (final e in _compuestos[palabras.first] ?? const <EntradaLexica>[]) {
+      final partes = e.forma.split(' ');
+      if (partes.length > palabras.length) continue;
+      var coincide = true;
+      for (var k = 0; k < partes.length; k++) {
+        if (partes[k] != palabras[k]) {
+          coincide = false;
+          break;
+        }
+      }
+      if (coincide && (mejor == null || partes.length > mejor.largo)) {
+        mejor = (entrada: e, largo: partes.length);
+      }
+    }
+    return mejor;
   }
 
   /// Todas las entradas de [forma] (vacío si no se conoce).
@@ -347,6 +423,7 @@ class LexicoEspanol {
 
   bool es(String forma, Categoria categoria) => como(forma, categoria) != null;
 
-  /// Todas las formas conocidas (para el vocabulario del corrector).
-  Iterable<String> get formas => _porForma.keys;
+  /// Todas las palabras conocidas (para el vocabulario del corrector),
+  /// incluidas las que forman parte de una forma de varias palabras.
+  Iterable<String> get formas => {..._porForma.keys, ..._partes};
 }
