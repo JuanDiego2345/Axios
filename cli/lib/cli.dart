@@ -17,31 +17,35 @@ export 'generadores.dart';
 export 'lexico.dart';
 export 'sintactico.dart';
 
-/// Resultado del pipeline de traducción.
+/// Resultado del pipeline de traducción a ambas lenguas.
 class ResultadoTraducir {
   final String entrada;
   final ResultadoLexico resultadoLexico;
   final ResultadoSintactico resultadoSintactico;
-  final ResultadoKethari? resultadoGeneracion;
+  final ResultadoKethari? resultadoKethari;
+  final ResultadoOzh? resultadoOzh;
   final int? idHistorial;
-  final String destino;
 
   ResultadoTraducir({
     required this.entrada,
     required this.resultadoLexico,
     required this.resultadoSintactico,
-    this.resultadoGeneracion,
+    this.resultadoKethari,
+    this.resultadoOzh,
     this.idHistorial,
-    required this.destino,
   });
 
   bool get exitoso =>
       resultadoSintactico.error == null &&
-      resultadoGeneracion != null &&
-      resultadoGeneracion!.ok;
+      (resultadoKethari?.ok == true || resultadoOzh?.ok == true);
 
-  String? get traduccion => resultadoGeneracion?.texto;
-  String? get error => resultadoSintactico.error?.mensaje ?? resultadoGeneracion?.error;
+  String? get traduccionKethari => resultadoKethari?.texto;
+  String? get traduccionOzh => resultadoOzh?.texto;
+  String? get traduccion => traduccionKethari ?? traduccionOzh;
+  String? get error =>
+      resultadoSintactico.error?.mensaje ??
+      resultadoKethari?.error ??
+      resultadoOzh?.error;
   Oracion? get arbol => resultadoSintactico.arbol;
 }
 
@@ -61,13 +65,14 @@ class ResultadoCargar {
 /// Orquestador central de Axios para la interfaz por línea de comandos.
 ///
 /// Integra la base de datos (con historial de preguntas persistente),
-/// el módulo léxico, el analizador sintáctico y los generadores.
+/// el módulo léxico, el analizador sintáctico y los generadores de Kethari y Ozh.
 class AxiosCli {
   final Database db;
   final LexicoRepo lexicoRepo;
   final AnalizadorSintactico parser;
   final FaseLexica lexico;
   final GeneradorKethari generadorKethari;
+  final GeneradorOzh generadorOzh;
 
   AxiosCli({
     required this.db,
@@ -75,6 +80,7 @@ class AxiosCli {
     required this.parser,
     required this.lexico,
     required this.generadorKethari,
+    required this.generadorOzh,
   });
 
   /// Crea una instancia de [AxiosCli] resolviendo los archivos de datos y
@@ -93,6 +99,7 @@ class AxiosCli {
     final parser = AnalizadorSintactico.desde(fuenteEspanol);
     final lexico = FaseLexica(parser.vocabulario);
     final generadorKethari = GeneradorKethari(FuenteKethariJson('$datos/kethari'));
+    final generadorOzh = GeneradorOzh(FuenteOzhJson('$datos/ozh'));
 
     return AxiosCli(
       db: db,
@@ -100,17 +107,18 @@ class AxiosCli {
       parser: parser,
       lexico: lexico,
       generadorKethari: generadorKethari,
+      generadorOzh: generadorOzh,
     );
   }
 
   /// 1. Orden obligatoria: `traducir "<pregunta>"`
   ///
-  /// Ejecuta el pipeline completo y REGISTRA la pregunta en la tabla `pregunta`
-  /// de la base de datos para que ninguna pregunta se pierda (Axios).
+  /// Traduce SIEMPRE a ambas lenguas (Kethari y Ozh) según lo exige el enunciado
+  /// y REGISTRA la pregunta en la tabla `pregunta` de la base de datos con
+  /// validación "sin validar" mientras no exista un componente validador.
   ResultadoTraducir traducir(
     String pregunta, {
     bool conTraza = false,
-    String destino = 'kethari',
   }) {
     // 1. Fase léxica
     final resLex = lexico.procesar(pregunta);
@@ -118,22 +126,17 @@ class AxiosCli {
     // 2. Fase sintáctica
     final resSint = parser.analizar(resLex.tokens, conTraza: conTraza);
 
-    ResultadoKethari? resGen;
+    ResultadoKethari? resKethari;
+    ResultadoOzh? resOzh;
+
     if (resSint.arbol != null) {
-      if (destino.toLowerCase() == 'kethari') {
-        resGen = generadorKethari.generar(resSint.arbol!);
-      } else {
-        resGen = ResultadoKethari.fallo(
-          'Generador para "$destino" aún no implementado',
-        );
-      }
+      resKethari = generadorKethari.generar(resSint.arbol!);
+      resOzh = generadorOzh.generar(resSint.arbol!);
     }
 
     // 3. Persistencia en la Base de Datos (Axios exige que ninguna pregunta se pierda)
-    final traduccionTexto = resGen?.ok == true ? resGen!.texto : null;
-    final validacionTexto = resSint.arbol != null
-        ? (resGen?.ok == true ? 'válida' : 'error de generación')
-        : 'error sintáctico';
+    // Sin validador activo, se guarda como "sin validar" si la sintaxis fue correcta
+    final validacionTexto = resSint.arbol != null ? 'sin validar' : 'error sintáctico';
 
     // Determinar texto corregido si hubo correcciones ortográficas
     final textoCorregido = resLex.correcciones.isNotEmpty
@@ -146,8 +149,8 @@ class AxiosCli {
     final id = lexicoRepo.registrarPregunta(
       original: pregunta,
       corregido: textoCorregido,
-      kethari: destino.toLowerCase() == 'kethari' ? traduccionTexto : null,
-      ozh: destino.toLowerCase() == 'ozh' ? traduccionTexto : null,
+      kethari: resKethari?.ok == true ? resKethari!.texto : null,
+      ozh: resOzh?.ok == true ? resOzh!.texto : null,
       validacion: validacionTexto,
     );
 
@@ -155,9 +158,9 @@ class AxiosCli {
       entrada: pregunta,
       resultadoLexico: resLex,
       resultadoSintactico: resSint,
-      resultadoGeneracion: resGen,
+      resultadoKethari: resKethari,
+      resultadoOzh: resOzh,
       idHistorial: id,
-      destino: destino,
     );
   }
 
@@ -166,16 +169,43 @@ class AxiosCli {
   /// Carga archivos CSV de léxico o señales en la base de datos con versionamiento.
   /// También acepta el formato oficial de Axios (SENAL|... y CORRECCION|...).
   ResultadoCargar cargar(String rutaArchivo) {
-    final archivo = File(rutaArchivo);
+    // Quitar comillas si las tiene
+    var rutaLimpia = rutaArchivo.trim();
+    if ((rutaLimpia.startsWith('"') && rutaLimpia.endsWith('"')) ||
+        (rutaLimpia.startsWith("'") && rutaLimpia.endsWith("'"))) {
+      rutaLimpia = rutaLimpia.substring(1, rutaLimpia.length - 1).trim();
+    }
+
+    var archivo = File(rutaLimpia);
+    if (!archivo.existsSync()) {
+      // Buscar en ubicaciones relativas comunes y por nombre de archivo
+      final nombre = rutaLimpia.split(RegExp(r'[/\\]')).last;
+      final posibles = [
+        'cli/$rutaLimpia',
+        'datos/$rutaLimpia',
+        'cli/datos/$rutaLimpia',
+        'datos/$nombre',
+        'cli/datos/$nombre',
+        '../cli/datos/$nombre',
+      ];
+      for (final p in posibles) {
+        if (File(p).existsSync()) {
+          archivo = File(p);
+          rutaLimpia = p;
+          break;
+        }
+      }
+    }
+
     if (!archivo.existsSync()) {
       throw FileSystemException('No se encontró el archivo a cargar', rutaArchivo);
     }
 
     // Formato oficial de Axios: SENAL|... y CORRECCION|...
-    if (lexicoRepo.esFormatoAxios(rutaArchivo)) {
-      final r = lexicoRepo.cargarAxios(rutaArchivo);
+    if (lexicoRepo.esFormatoAxios(rutaLimpia)) {
+      final r = lexicoRepo.cargarAxios(rutaLimpia);
       return ResultadoCargar(
-        archivo: rutaArchivo,
+        archivo: rutaLimpia,
         tipo: 'señales y correcciones del manual',
         filas: r.filas,
       );
@@ -191,18 +221,18 @@ class AxiosCli {
     String tipo = '';
 
     if (encabezado.contains('lema_es') || encabezado.contains('categoria')) {
-      filasCargadas = lexicoRepo.cargarLexico(rutaArchivo);
+      filasCargadas = lexicoRepo.cargarLexico(rutaLimpia);
       tipo = 'léxico';
     } else if (encabezado.contains('dia') || encabezado.contains('transcripcion') || encabezado.contains('salida')) {
-      filasCargadas = lexicoRepo.cargarSenales(rutaArchivo);
+      filasCargadas = lexicoRepo.cargarSenales(rutaLimpia);
       tipo = 'señales';
     } else {
-      filasCargadas = lexicoRepo.cargarLexico(rutaArchivo);
+      filasCargadas = lexicoRepo.cargarLexico(rutaLimpia);
       tipo = 'léxico (inferido)';
     }
 
     return ResultadoCargar(
-      archivo: rutaArchivo,
+      archivo: rutaLimpia,
       tipo: tipo,
       filas: filasCargadas,
     );

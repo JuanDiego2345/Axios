@@ -58,7 +58,7 @@ Si se ejecuta sin argumentos, inicia la **consola interactiva (REPL)**.
 El CLI implementa las cuatro órdenes fundamentales del sistema Axios:
 
 ### 1. `traducir "<pregunta>"`
-Procesa una pregunta u oración en español a través del pipeline (Fase Léxica $\rightarrow$ Analizador Sintáctico $\rightarrow$ Generador Kethari) y **registra obligatoriamente cada consulta en la base de datos** (`axios.db`) para garantizar que ninguna pregunta se pierda.
+Procesa una pregunta u oración en español a través del pipeline (Fase Léxica $\rightarrow$ Analizador Sintáctico $\rightarrow$ Generadores Kethari y Ozh), entregando **ambas lenguas** simultáneamente, y **registra obligatoriamente cada consulta en la base de datos** (`axios.db`) con estado `sin validar` para garantizar que ninguna pregunta se pierda.
 
 ```bash
 dart run bin/cli.dart traducir "¿Cuándo vendrán ustedes?"
@@ -68,7 +68,6 @@ dart run bin/cli.dart traducir "¿Cuándo vendrán ustedes?"
 - `-t`, `--traza`: Muestra las decisiones paso a paso en cada fase.
 - `-a`, `--arbol`: Dibuja el árbol sintáctico intermedio en ASCII.
 - `--tokens`: Muestra los tokens identificados y sus posiciones.
-- `-d`, `--destino`: Lengua alienígena de destino (por defecto: `kethari`).
 
 **Ejemplo con traza y árbol:**
 ```bash

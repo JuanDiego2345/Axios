@@ -32,6 +32,10 @@ class Normalizador {
   static final RegExp _signosDescartados =
       RegExp(r'''[¡!;:"'«»()\[\]{}…_/\\-]''');
 
+  /// Caracteres invisibles, nulos o de control que ingresan por consolas o codificaciones (ej. \x00).
+  static final RegExp _caracteresInvisibles =
+      RegExp(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\uFEFF\u200B-\u200D]');
+
   /// Separador de miles: "1.500" o "1,500" -> "1500".
   static final RegExp _separadorMiles = RegExp(r'(\d{1,3})[.,](\d{3})(?!\d)');
 
@@ -47,7 +51,8 @@ class Normalizador {
   /// esas se convierten con [normalizarNumeros] después del corrector.
   /// Si se pasa [ajustes], anota ahí cada arreglo de signos que hizo.
   String normalizar(String texto, {List<String>? ajustes}) {
-    var t = normalizarPalabra(texto);
+    var t = texto.replaceAll(_caracteresInvisibles, '');
+    t = normalizarPalabra(t);
     t = t.replaceAll(_signosDescartados, ' ');
 
     String antes;

@@ -1,0 +1,57 @@
+{
+  "_nota": "Léxico Ozh del manual de decodificación v0.7. Las llaves son los CONCEPTOS del árbol intermedio.",
+  "pronombres": {
+    "1s": "ʔen",
+    "2s": "sha",
+    "3s": "oru",
+    "1p": "ʔenka",
+    "2p": "shavi",
+    "3p": "oruvi"
+  },
+  "sustantivos": {
+    "PLANETA": "thüm",
+    "ESTRELLA": "ral",
+    "TIERRA": "mak",
+    "AGUA": "naʔ",
+    "NAVE": "gor",
+    "MENSAJE": "vesh",
+    "PAZ": "ilu",
+    "CICLO": "drüm",
+    "ANIO": "drümak",
+    "LUZ": "osk",
+    "CRIATURA": "fen",
+    "HOGAR": "beth"
+  },
+  "verbos": {
+    "VENIR": "sur",
+    "LLEGAR": "sur",
+    "ENVIAR": "dra",
+    "VER": "ʔim",
+    "QUERER": "lom",
+    "SER": "ha",
+    "ESTAR": "ha",
+    "HABLAR": "tal",
+    "ESCUCHAR": "nem",
+    "ESPERAR": "bo",
+    "VISITAR": "kesh"
+  },
+  "cifras": {
+    "0": "zu",
+    "1": "ois",
+    "2": "dav",
+    "3": "kru",
+    "4": "fem",
+    "5": "ulo",
+    "6": "sab",
+    "7": "nir",
+    "8": "tok",
+    "9": "hev"
+  },
+  "interrogativos": {
+    "QUE": "wu",
+    "CUANDO": "wem",
+    "DONDE": "wor",
+    "CUANTOS": "wak",
+    "QUIEN": "wis"
+  }
+}
