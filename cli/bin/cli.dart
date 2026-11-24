@@ -82,7 +82,7 @@ void _iniciarModoInteractivo(AxiosCli axios) {
     final linea = stdin.readLineSync();
     if (linea == null) break;
 
-    final input = linea.trim();
+    final input = linea.replaceAll(RegExp(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\uFEFF]'), '').trim();
     if (input.isEmpty) continue;
 
     if (input == 'salir' || input == ':salir' || input == ':q' || input == 'exit') {
@@ -115,7 +115,7 @@ void _iniciarModoInteractivo(AxiosCli axios) {
         if (partes.length < 2) {
           stdout.writeln('Uso: cargar <archivo>');
         } else {
-          _manejarComandoCargar(partes[1], axios);
+          _manejarComandoCargar(partes.sublist(1).join(' '), axios);
         }
       } else if (orden == 'historial') {
         String? desde;
@@ -159,7 +159,6 @@ void _manejarComandoTraducir(
   bool traza = trazaPorDefecto;
   bool arbol = arbolPorDefecto;
   bool tokens = tokensPorDefecto;
-  String destino = 'kethari';
   final textoPartes = <String>[];
 
   for (int i = 0; i < args.length; i++) {
@@ -170,10 +169,6 @@ void _manejarComandoTraducir(
       arbol = true;
     } else if (a == '--tokens') {
       tokens = true;
-    } else if (a == '-d' || a == '--destino') {
-      if (i + 1 < args.length) {
-        destino = args[++i];
-      }
     } else {
       textoPartes.add(a);
     }
@@ -188,14 +183,14 @@ void _manejarComandoTraducir(
 
   if (frase.isEmpty) {
     stderr.writeln('Error: Falta la pregunta a traducir.');
-    stderr.writeln('Uso: traducir "<pregunta>" [-t] [-a] [--tokens] [-d kethari]');
+    stderr.writeln('Uso: traducir "<pregunta>" [-t] [-a] [--tokens]');
     return;
   }
 
   stdout.writeln('\n----------------------------------------');
   stdout.writeln('Pregunta: "$frase"');
 
-  final r = axios.traducir(frase, conTraza: traza, destino: destino);
+  final r = axios.traducir(frase, conTraza: traza);
 
   if (tokens) {
     stdout.writeln('\n[Tokens Léxicos]');
@@ -231,21 +226,38 @@ void _manejarComandoTraducir(
     stdout.writeln(r.arbol!.dibujar());
   }
 
-  if (traza && r.resultadoGeneracion != null && r.resultadoGeneracion!.traza.isNotEmpty) {
-    stdout.writeln('\n[Traza de Generación]');
-    for (final paso in r.resultadoGeneracion!.traza) {
+  if (traza && r.resultadoKethari != null && r.resultadoKethari!.traza.isNotEmpty) {
+    stdout.writeln('\n[Traza de Generación Kethari]');
+    for (final paso in r.resultadoKethari!.traza) {
+      stdout.writeln('  $paso');
+    }
+  }
+
+  if (traza && r.resultadoOzh != null && r.resultadoOzh!.traza.isNotEmpty) {
+    stdout.writeln('\n[Traza de Generación Ozh]');
+    for (final paso in r.resultadoOzh!.traza) {
       stdout.writeln('  $paso');
     }
   }
 
   stdout.writeln('\n========================================');
-  if (r.exitoso) {
-    stdout.writeln('Traducción ($destino): ${r.traduccion}');
-  } else {
+  if (r.resultadoKethari?.ok == true) {
+    stdout.writeln('Traducción (Kethari): ${r.traduccionKethari}');
+  } else if (r.resultadoKethari?.error != null) {
+    stdout.writeln('Kethari:             ${r.resultadoKethari!.error}');
+  }
+
+  if (r.resultadoOzh?.ok == true) {
+    stdout.writeln('Traducción (Ozh):     ${r.traduccionOzh}');
+  } else if (r.resultadoOzh?.error != null) {
+    stdout.writeln('Ozh:                 ${r.resultadoOzh!.error}');
+  }
+
+  if (!r.exitoso) {
     stderr.writeln('No se pudo traducir: ${r.error}');
   }
   stdout.writeln('========================================');
-  stdout.writeln('[Pregunta registrada en BD - ID: ${r.idHistorial}]\n');
+  stdout.writeln('[Pregunta registrada en BD - ID: ${r.idHistorial} (sin validar)]\n');
 }
 
 void _manejarComandoCargar(String rutaArchivo, AxiosCli axios) {

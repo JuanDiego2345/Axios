@@ -1,0 +1,22 @@
+{
+  "_nota": "Gramática y partículas de Ozh (manual v0.7).",
+  "tiempo": {
+    "presente": "",
+    "pasado": "ʔoka",
+    "futuro": "venu"
+  },
+  "negacion": "ne",
+  "pregunta": {
+    "prefijoVerbo": "ʔa-"
+  },
+  "numero": {
+    "base": 10,
+    "separador": "-"
+  },
+  "particulas": {
+    "defecto": "tho",
+    "segundaPersona": "mar",
+    "primeraPasado": "zi"
+  }
+}
+
