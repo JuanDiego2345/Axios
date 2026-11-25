@@ -40,4 +40,4 @@ basta una clase que implemente `FuenteKethari` (`pronombre`, `sustantivo`,
 
 ## Decisiones
 
-Ver `docs/bitacora-generadores.md` (K-01 a K-08).
+Ver `docs/bitacora-generadores.md` (K-01 a K-10).

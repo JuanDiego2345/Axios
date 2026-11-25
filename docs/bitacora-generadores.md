@@ -45,3 +45,20 @@ Pruebas en `cli/test/generadores/generador_kethari_test.dart`.
 - **Opciones:** (a) `anir ra kumesh` (poseedor, número, sustantivo); (b) `ra anir kumesh`.
 - **Decisión:** (a). El poseedor va delante de todo lo poseído ("dos naves"), y el número queda pegado al sustantivo, como en las señales de los días 3 y 7. Ninguna señal tiene los dos juntos; se revisa si llega una.
 - **Prueba:** "poseedor antes del número: anir ra kumesh (bitácora K-08)".
+
+### K-09 · 25/11/2026 · Corrección del manual v0.8: `teka`
+- **Problema:** el archivo de la semana 2 corrige `teka`: ya no significa "tierra" sino "territorio reclamado". El léxico del generador seguía con `TIERRA = teka`, así que "¿Quieren nuestra tierra?" se habría transmitido como "¿quieren nuestro territorio reclamado?", la clase de palabra equivocada que puede sonar a amenaza.
+- **Opciones:** (a) dejar `TIERRA = teka`; (b) pasar `teka` a `TERRITORIO_RECLAMADO` (concepto que agregó el parser) y dejar `TIERRA` sin palabra Kethari.
+- **Decisión:** (b). Con (a) el sistema transmitiría un significado que Axios ya corrigió. Sin palabra para "tierra", el generador no traduce y explica que falta (K-06). En Ozh `mak` sigue siendo tierra: la corrección solo toca Kethari. El cambio está en `datos/kethari/lexico.json`, sin recompilar.
+- **Prueba:** "día 8: iresh tekaesh nuthal" y "tierra ya no se traduce como teka: lo explica".
+
+### K-10 · 25/11/2026 · Dos verbos seguidos ("¿Quieren visitar la tierra?")
+- **Problema:** el manual no dice cómo se combinan dos verbos en Kethari ni en Ozh, ninguna señal lo muestra y el árbol tiene un solo verbo (pregunta de S-11).
+- **Opciones:** (a) inventar una forma (`dun thal`, verbo + verbo); (b) traducir solo un verbo; (c) no traducir y explicarlo.
+- **Decisión:** (c). (a) no tiene respaldo en el manual ni en las señales ("No se inventa nada") y (b) cambia el sentido de la pregunta. El parser sigue rechazando la oración con su explicación (S-11), así que el árbol no cambia. Se revisa si llega una señal con dos verbos.
+- **Prueba:** "dos verbos seguidos no llegan al generador (K-10)".
+
+### Evidencia nueva para decisiones anteriores (señales de la semana 2)
+- **K-05:** día 10 `mok-ra sorinesh` = veintiséis estrellas (4·6 + 2 = 26). Tercera señal que confirma la base 6.
+- **K-01:** día 10 `anir … korok` ("nosotros vimos") vuelve a usar `anir`.
+- **Prueba:** "día 10: anir mok-ra sorinesh korok" y "día 9: ir yorr mi ka".
