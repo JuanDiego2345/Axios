@@ -18,6 +18,11 @@
     "separador": "-"
   },
 
+  "alternativas": {
+    "_nota": "La BD guarda 'nosotros' como anul|anir (manual 3.1). El generador usa anir: la Tierra habla a los alienígenas y ese 'nosotros' no los incluye (bitácora K-01). Si una celda tiene varias palabras y no está aquí, no se traduce.",
+    "anul|anir": "anir"
+  },
+
   "pregunta": {
     "particula": "ka"
   }

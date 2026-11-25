@@ -62,3 +62,13 @@ Pruebas en `cli/test/generadores/generador_kethari_test.dart`.
 - **K-05:** día 10 `mok-ra sorinesh` = veintiséis estrellas (4·6 + 2 = 26). Tercera señal que confirma la base 6.
 - **K-01:** día 10 `anir … korok` ("nosotros vimos") vuelve a usar `anir`.
 - **Prueba:** "día 10: anir mok-ra sorinesh korok" y "día 9: ir yorr mi ka".
+
+### K-11 · 25/11/2026 · Los generadores leen el léxico de la base de datos
+- **Problema:** `cargar` guardaba señales y correcciones en la BD, pero los generadores leían los JSON de `datos/`. Una corrección cargada aparecía en `palabra` y no en `traducir` (criterio 17: incorporar cambios sin recompilar). Además la BD guarda el léxico por palabra española ("llegar", "tú") y el árbol entrega conceptos (`VENIR`) y rasgos (`2s`).
+- **Opciones:** (a) seguir editando los JSON a mano; (b) pedir a la BD una columna `concepto`; (c) usar el vocabulario del parser como puente concepto → palabras españolas y buscarlas en la BD tal como está.
+- **Decisión:** (c). No cambia las tablas ni el parser, y el parser ya sabe que `VENIR` es "venir" y "llegar". `LexicoAlienigenaBd` consulta la BD en cada búsqueda con la versión vigente en una fecha, así que lo cargado se usa en la traducción siguiente y se puede preguntar "qué se habría transmitido" en una fecha pasada. `FuenteKethariBd` y `FuenteOzhBd` implementan las mismas interfaces que las de JSON: los generadores no cambian. Las reglas (afijos, partículas, base) siguen en `gramatica.json`, porque la BD no tiene tablas para ellas; son datos, no código.
+- **Detalles:**
+  - Comparación sin tildes ("tú" en la BD = "tu" del parser), igual que el normalizador.
+  - Si dos sinónimos dan palabras distintas (por ejemplo, una corrección cambia "llegar" y no "venir"), no se elige al azar: no se traduce y se explica.
+  - `anul|anir` en una celda: se usa la que diga `gramatica.json` → `alternativas` (K-01). Una celda con varias palabras que no esté ahí no se traduce.
+- **Prueba:** `fuente_bd_test.dart` → "después de cargar la semana 2, tierra ya no tiene palabra", "en una fecha anterior a la corrección se usa lo que se creía", "un archivo nuevo cambia la traducción sin recompilar".
