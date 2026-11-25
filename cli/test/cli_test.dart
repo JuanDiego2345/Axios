@@ -85,6 +85,9 @@ void main() {
         rutaDatos: 'datos',
         dbCustom: abrirBd(':memory:'),
       );
+      // Los generadores leen el léxico de la BD (bitácora K-11): sin el
+      // manual cargado no hay palabras que traducir.
+      axios.cargar('datos/lexico_inicial.csv');
     });
 
     tearDown(() {

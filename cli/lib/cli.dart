@@ -98,8 +98,12 @@ class AxiosCli {
     final fuenteEspanol = FuenteLexicoJson('$datos/espanol');
     final parser = AnalizadorSintactico.desde(fuenteEspanol);
     final lexico = FaseLexica(parser.vocabulario);
-    final generadorKethari = GeneradorKethari(FuenteKethariJson('$datos/kethari'));
-    final generadorOzh = GeneradorOzh(FuenteOzhJson('$datos/ozh'));
+    // El léxico de Kethari y Ozh se lee de la BD: lo que entra con `cargar`
+    // se usa en la traducción siguiente (bitácora K-11).
+    final generadorKethari = GeneradorKethari(
+        FuenteKethariBd(db, fuenteEspanol, carpeta: '$datos/kethari'));
+    final generadorOzh =
+        GeneradorOzh(FuenteOzhBd(db, fuenteEspanol, carpeta: '$datos/ozh'));
 
     return AxiosCli(
       db: db,
