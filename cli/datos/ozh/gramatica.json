@@ -1,12 +1,14 @@
 {
-  "_nota": "Gramática y partículas de Ozh (manual v0.7).",
+  "_nota": "Gramática y partículas de Ozh (manual v0.7, sección 3.4). El enunciado prohíbe escribir las reglas en el código: aquí están las piezas y la regla de la partícula. El orden de la oración es el algoritmo del generador.",
   "tiempo": {
+    "_nota": "Van al principio de la oración (manual 3.4).",
     "presente": "",
     "pasado": "ʔoka",
     "futuro": "venu"
   },
   "negacion": "ne",
   "pregunta": {
+    "_nota": "Prefijo del verbo en las preguntas; el guion marca dónde se pega.",
     "prefijoVerbo": "ʔa-"
   },
   "numero": {
@@ -14,9 +16,22 @@
     "separador": "-"
   },
   "particulas": {
-    "defecto": "tho",
-    "segundaPersona": "mar",
-    "primeraPasado": "zi"
+    "_nota": "Va justo después del verbo y es obligatoria. zi = lo vimos, mar = nos lo dijeron, tho = lo deducimos. Se aplica la PRIMERA regla que coincide. Con estas tres reglas se reproducen 9 de las 10 señales Ozh; la del día 9 es la excepción (bitácora O-01).",
+    "reglas": [
+      {
+        "tiempo": "pasado",
+        "particula": "zi",
+        "porque": "Lo pasado se presenta como visto: días 1, 4 y 8."
+      },
+      {
+        "persona": "tercera",
+        "particula": "tho",
+        "porque": "Sobre otros, en presente o futuro, se deduce: días 2, 3 y 10."
+      },
+      {
+        "particula": "mar",
+        "porque": "Lo demás (yo, nosotros, ustedes en presente o futuro) se sabe por lo dicho: días 5, 6 y 7."
+      }
+    ]
   }
 }
-

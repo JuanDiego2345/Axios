@@ -3,6 +3,7 @@
 /// Uso: `import 'package:cli/generadores.dart';`
 library;
 
+export 'generadores/ambiguedad.dart';
 export 'generadores/fuente_bd.dart';
 export 'generadores/fuente_kethari.dart';
 export 'generadores/fuente_ozh.dart';
