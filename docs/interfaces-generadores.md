@@ -31,6 +31,36 @@ r.traza;  // cada decisión, para el modo traza
 `escribirNumero(15, reglas, cifra)` → `ra-sel` en Kethari. Ozh usará la misma
 función con `base: 10` (15 → `ois-ulo`).
 
+## Léxico desde la base de datos (K-11)
+
+```dart
+final db = abrirBd('datos/axios.db');
+final espanol = FuenteLexicoJson('datos/espanol');   // la misma del parser
+final kethari = GeneradorKethari(FuenteKethariBd(db, espanol));
+final ozh = GeneradorOzh(FuenteOzhBd(db, espanol));
+
+// "qué se habría transmitido" en una fecha:
+GeneradorKethari(FuenteKethariBd(db, espanol, fecha: '2026-11-20'));
+```
+
+Cada búsqueda lee la BD en ese momento: lo que entra con `cargar` se usa en
+la traducción siguiente. Las reglas siguen en `datos/<lengua>/gramatica.json`.
+
+**Para el CLI (`lib/cli.dart`, `AxiosCli.crear`):** cambiar
+
+```dart
+final generadorKethari = GeneradorKethari(FuenteKethariJson('$datos/kethari'));
+final generadorOzh = GeneradorOzh(FuenteOzhJson('$datos/ozh'));
+```
+por
+```dart
+final generadorKethari = GeneradorKethari(
+    FuenteKethariBd(db, fuenteEspanol, carpeta: '$datos/kethari'));
+final generadorOzh =
+    GeneradorOzh(FuenteOzhBd(db, fuenteEspanol, carpeta: '$datos/ozh'));
+```
+La BD debe tener cargado `datos/lexico_inicial.csv` antes de traducir.
+
 ## Para la base de datos (integrante 4)
 
 El generador pide las palabras por **concepto** (`VENIR`, `PLANETA`,
@@ -40,4 +70,4 @@ basta una clase que implemente `FuenteKethari` (`pronombre`, `sustantivo`,
 
 ## Decisiones
 
-Ver `docs/bitacora-generadores.md` (K-01 a K-10).
+Ver `docs/bitacora-generadores.md` (K-01 a K-11).
