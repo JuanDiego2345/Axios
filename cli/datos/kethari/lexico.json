@@ -11,10 +11,11 @@
     "3p": "iresh"
   },
 
+  "_sustantivos": "Manual v0.8 (corrección de la semana 2): teka ya no es 'tierra' sino 'territorio reclamado'. TIERRA queda sin palabra Kethari: el generador lo explica en vez de usar teka (bitácora K-09).",
   "sustantivos": {
     "PLANETA": "vael",
     "ESTRELLA": "sorin",
-    "TIERRA": "teka",
+    "TERRITORIO_RECLAMADO": "teka",
     "AGUA": "dahl",
     "NAVE": "kum",
     "MENSAJE": "ombra",

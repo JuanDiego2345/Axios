@@ -157,6 +157,60 @@ void main() {
     });
   });
 
+  group('señales de la semana 2', () {
+    test('día 8: iresh tekaesh nuthal (teka = territorio reclamado, K-09)', () {
+      const o = Oracion(
+        modo: Modo.afirmacion,
+        negada: true,
+        tiempo: Tiempo.presente,
+        verbo: 'QUERER',
+        sujeto: Pronominal(Persona.tercera, Numero.plural),
+        objeto: Nominal('TERRITORIO_RECLAMADO', numero: Numero.plural),
+      );
+      expect(kethari(o), 'iresh tekaesh nuthal');
+    });
+
+    test('día 9: ir yorr mi ka (pregunta de sí o no con ser)', () {
+      const o = Oracion(
+        modo: Modo.preguntaSiNo,
+        negada: false,
+        tiempo: Tiempo.presente,
+        verbo: 'SER',
+        sujeto: Pronominal(Persona.tercera, Numero.singular),
+        objeto: Nominal('CRIATURA', numero: Numero.singular),
+      );
+      expect(kethari(o), 'ir yorr mi ka');
+    });
+
+    test('día 10: anir mok-ra sorinesh korok (26 = 4·6 + 2, K-05)', () {
+      const o = Oracion(
+        modo: Modo.afirmacion,
+        negada: false,
+        tiempo: Tiempo.pasado,
+        verbo: 'VER',
+        sujeto: nosotros,
+        objeto: Nominal('ESTRELLA', numero: Numero.plural, cantidad: 26),
+      );
+      expect(kethari(o), 'anir mok-ra sorinesh korok');
+    });
+
+    test('"tierra" ya no se traduce como teka: lo explica (K-09)', () {
+      const o = Oracion(
+        modo: Modo.preguntaSiNo,
+        negada: false,
+        tiempo: Tiempo.presente,
+        verbo: 'QUERER',
+        sujeto: ustedes,
+        objeto: Nominal('TIERRA',
+            numero: Numero.singular,
+            poseedor: Poseedor(Persona.primera, Numero.plural)),
+      );
+      final r = generador.generar(o);
+      expect(r.ok, isFalse);
+      expect(r.error, contains('TIERRA'));
+    });
+  });
+
   group('reglas del manual', () {
     test('ejemplo del manual: an dahl thal (presente sin sufijo)', () {
       const o = Oracion(
@@ -289,11 +343,21 @@ void main() {
       'Quince naves llegaron': 'ra-sel kumesh vinok',
       'Nosotros esperaremos seis ciclos': 'anir ti-vo lunesh tepime',
       '¿Van a llegar quince naves?': 'ra-sel kumesh vinime ka',
+      'Ellos no quieren territorios reclamados.': 'iresh tekaesh nuthal',
+      '¿Es él una criatura?': 'ir yorr mi ka',
+      'Nosotros vimos veintiséis estrellas.': 'anir mok-ra sorinesh korok',
     };
     pares.forEach((espanol, esperado) {
       test('"$espanol" -> $esperado', () {
         expect(traducir(espanol), esperado);
       });
+    });
+
+    test('dos verbos seguidos no llegan al generador (K-10)', () {
+      final r = parser.analizar(
+          lexico.procesar('¿Quieren visitar la tierra?').tokens);
+      expect(r.arbol, isNull);
+      expect(r.error!.mensaje, contains('dos verbos'));
     });
   });
 }
