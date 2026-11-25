@@ -132,7 +132,7 @@ class FuenteOzhBd implements FuenteOzh {
   String get prefijoPregunta => reglas.prefijoPregunta;
 
   @override
-  String particulaPara(
+  String? particulaPara(
           {required Persona persona,
           required Numero numero,
           required Tiempo tiempo}) =>

@@ -72,3 +72,55 @@ Pruebas en `cli/test/generadores/generador_kethari_test.dart`.
   - Si dos sinónimos dan palabras distintas (por ejemplo, una corrección cambia "llegar" y no "venir"), no se elige al azar: no se traduce y se explica.
   - `anul|anir` en una celda: se usa la que diga `gramatica.json` → `alternativas` (K-01). Una celda con varias palabras que no esté ahí no se traduce.
 - **Prueba:** `fuente_bd_test.dart` → "después de cargar la semana 2, tierra ya no tiene palabra", "en una fecha anterior a la corrección se usa lo que se creía", "un archivo nuevo cambia la traducción sin recompilar".
+
+### K-07 · 25/11/2026 · Preguntas que se leen igual
+- **Problema (lo señaló Jacobo):** "¿A quién escuchan ustedes?" y "¿Quién los escucha a ustedes?" tienen árboles distintos (quién es objeto o sujeto), pero salen iguales: Kethari `sem ulesh rhu ka`, Ozh `ʔanem … shavi wis`. Las dos lenguas ponen la palabra interrogativa en un extremo y no marcan quién hace la acción.
+- **Opciones:** (a) dejar la palabra interrogativa en su hueco cuando es objeto (`ulesh sem rhu ka`), contra el manual; (b) no traducir cuando hay ambigüedad; (c) traducir según el manual y avisar.
+- **Decisión:** (c). (a) contradice el manual ("la palabra interrogativa va al principio" / "al final") y la señal Ozh del día 9 la pone al final siendo objeto; (b) bloquearía preguntas básicas como "¿Qué quieren ustedes?". Los resultados de los dos generadores traen el aviso en `advertencias` y en la traza.
+- **Prueba:** `generador_ozh_test.dart` → "quién como objeto o como sujeto: avisa".
+
+## Generador de Ozh
+
+El primer generador de Ozh entró con el PR del CLI (#20). Se revisó contra el manual y las señales y se reescribió con las decisiones siguientes. Pruebas en `cli/test/generadores/generador_ozh_test.dart`.
+
+### O-01 · 25/11/2026 · Qué partícula va después del verbo
+- **Problema:** Ozh exige `zi` (lo vimos), `mar` (nos lo dijeron) o `tho` (lo deducimos) después del verbo, y el manual no dice cuál usar; la nota 3.5 dice que en las preguntas "no parece referirse a quien pregunta". El árbol no dice cómo sabe algo quien habla.
+- **Evidencia (10 señales Ozh):**
+
+| Día | Tiempo | Sujeto | Partícula |
+|---|---|---|---|
+| 1 | pasado | 1p | zi |
+| 4 | pasado (decodificado) | 1p | zi |
+| 8 | pasado | 3p | zi |
+| 2 | presente | 3p | tho |
+| 3 | futuro | nave (3ª) | tho |
+| 10 | presente | 3p | tho |
+| 5 | presente, pregunta | 2p | mar |
+| 6 | presente | 2p | mar |
+| 7 | presente | 1s | mar |
+| 9 | presente, pregunta | 2p | **tho** |
+
+- **Opciones:** (a) una sola partícula siempre; (b) la regla del primer generador (2ª o 1ª singular → `mar`, 1ª plural en pasado → `zi`, resto → `tho`), que falla en los días 8 y 9; (c) tres reglas en orden: pasado → `zi`; tercera persona → `tho`; lo demás → `mar`.
+- **Decisión:** (c). Reproduce 9 de 10 señales y tiene sentido con lo que significan: lo pasado se cuenta como visto, lo que hacen otros se deduce, y lo que hacemos o hacen ustedes se sabe porque se dijo. La única excepción es el día 9; ningún dato del árbol lo distingue del día 5 (las dos son preguntas a "ustedes" en presente). Las reglas están en `datos/ozh/gramatica.json` → `particulas.reglas`, no en el código: si llega otra señal, se cambia el dato.
+- **Prueba:** grupo "señales Ozh del registro (bitácora O-01)".
+
+### O-02 · 25/11/2026 · Orden del tiempo y la negación
+- **Problema:** el primer generador ponía `ne ʔoka verbo`.
+- **Decisión:** `ʔoka`/`venu` van "al principio de la oración" y `ne` "delante del verbo" (manual 3.4), así que el orden es `ʔoka ne verbo`.
+- **Prueba:** "tiempo antes de la negación: ʔoka ne ... (O-02)".
+
+### O-03 · 25/11/2026 · Palabra interrogativa que ocupa el sujeto u objeto
+- **Problema:** como en Kethari (K-02), "quién" o "qué" ocupan un hueco y además van al final.
+- **Decisión:** van solo al final, sin repetirse, como en la señal del día 9 (`ʔanem tho shavi wis`, el objeto "quién" al final). Con "¿Quién envió el mensaje?" el sujeto queda representado por `wis` al final: `ʔoka ʔadra zi vesh wis`.
+- **Prueba:** "quién como sujeto: va al final y no se repite (O-03)".
+
+### O-04 · 25/11/2026 · No omitir en silencio
+- **Problema:** el primer generador quitaba la cantidad o el poseedor si no los podía escribir y traducía igual: transmitía algo distinto de lo preguntado.
+- **Decisión:** igual que en Kethari (K-06): si falta cualquier palabra, no se traduce y se explica qué falta. Además se quitaron las palabras escritas en el código como valores de respaldo (`'ʔoka'`, `'ne'`, `'mar'`…): si falta un dato en `gramatica.json`, el programa lo dice al arrancar (criterio 15).
+- **Prueba:** grupo "no inventa ni omite (O-04)".
+
+### O-05 · 25/11/2026 · Señal del día 4 sin `ʔoka`
+- **Problema:** el decodificador traduce `ne ʔim zi ʔenka gor` como "No vimos ninguna nave" (pasado), pero la señal no trae `ʔoka`.
+- **Opciones:** (a) quitar `ʔoka` del pasado; (b) seguir el manual y poner `ʔoka`.
+- **Decisión:** (b). El manual dice que el pasado lleva `ʔoka`, y las señales de los días 1 y 8 lo traen. Lo más probable es que el día 4 sea presente ("no vemos") y el decodificador lo haya pasado al pasado. Fuera del marcador, la traducción coincide (orden, partícula y palabras).
+- **Prueba:** "día 4: con pasado sale ʔoka; la señal no lo trae (O-05)".

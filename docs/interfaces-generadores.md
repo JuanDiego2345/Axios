@@ -70,4 +70,18 @@ basta una clase que implemente `FuenteKethari` (`pronombre`, `sustantivo`,
 
 ## Decisiones
 
-Ver `docs/bitacora-generadores.md` (K-01 a K-11).
+Ver `docs/bitacora-generadores.md` (K-01 a K-11) y Ozh (O-01 a O-05).
+
+## Generador de Ozh
+
+```dart
+final ozh = GeneradorOzh(FuenteOzhJson());   // o FuenteOzhBd(db, espanol)
+final r = ozh.generar(arbol);
+r.texto;         // "ʔasur mar shavi wem"
+r.error;         // por qué no hay traducción
+r.advertencias;  // avisos que no impiden traducir (K-07)
+```
+
+Orden: `[ʔoka|venu] [ne] [ʔa-]verbo partícula sujeto objeto [interrogativo]`.
+La partícula sale de `datos/ozh/gramatica.json` → `particulas.reglas`: se usa
+la primera regla que coincide con el tiempo y la persona del sujeto (O-01).

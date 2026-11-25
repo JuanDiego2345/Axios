@@ -17,6 +17,7 @@
 library;
 
 import '../sintactico/arbol.dart';
+import 'ambiguedad.dart';
 import 'fuente_kethari.dart';
 import 'numeros.dart';
 
@@ -31,7 +32,11 @@ class ResultadoKethari {
 
   final List<String> traza;
 
-  const ResultadoKethari._(this.texto, this.error, this.traza);
+  /// Avisos que no impiden traducir (por ejemplo K-07).
+  final List<String> advertencias;
+
+  const ResultadoKethari._(this.texto, this.error, this.traza,
+      [this.advertencias = const []]);
 
   const ResultadoKethari.fallo(String error, [List<String> traza = const []])
       : this._(null, error, traza);
@@ -89,8 +94,11 @@ class _Generacion {
       return ResultadoKethari._(null, error, List.unmodifiable(traza));
     }
     final texto = partes.join(' ');
+    final aviso = avisoAmbiguedad(o);
+    if (aviso != null) traza.add('AVISO: $aviso');
     traza.add('resultado: $texto');
-    return ResultadoKethari._(texto, null, List.unmodifiable(traza));
+    return ResultadoKethari._(texto, null, List.unmodifiable(traza),
+        aviso == null ? const [] : [aviso]);
   }
 
   /// "Si llevan una palabra interrogativa, esa palabra va al principio."
