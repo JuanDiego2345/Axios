@@ -3,8 +3,10 @@
 /// Uso: `import 'package:cli/generadores.dart';`
 library;
 
+export 'generadores/fuente_bd.dart';
 export 'generadores/fuente_kethari.dart';
 export 'generadores/fuente_ozh.dart';
 export 'generadores/generador_kethari.dart';
 export 'generadores/generador_ozh.dart';
+export 'generadores/lexico_bd.dart';
 export 'generadores/numeros.dart';
